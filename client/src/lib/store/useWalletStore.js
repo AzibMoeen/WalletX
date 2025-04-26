@@ -7,7 +7,6 @@ const useWalletStore = create((set, get) => ({
   isLoading: false,
   error: null,
   
-  // Fetch wallet balance
   fetchBalance: async () => {
     const token = localStorage.getItem('accessToken');
     if (!token) return;

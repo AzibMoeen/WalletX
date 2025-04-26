@@ -19,10 +19,10 @@ import {
   CardFooter, 
   CardHeader, 
   CardTitle 
-} from "../../../../../components/ui/card"
-import { Button } from "../../../../../components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../components/ui/select"
-import useWalletStore from "../../../../../lib/store/useWalletStore"
+} from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import useWalletStore from "@/lib/store/useWalletStore"
 import { toast } from "sonner"
 
 export default function TransactionsPage() {

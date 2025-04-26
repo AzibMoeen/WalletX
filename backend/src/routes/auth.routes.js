@@ -11,6 +11,7 @@ router.post("/register", Register);
 router.post("/login", Login);
 router.post("/logout", verifyJWT, Logout);
 router.get("/profile", verifyJWT, GetProfile);
-
+// Add the /me endpoint as an alias to /profile for frontend compatibility
+router.get("/me", verifyJWT, GetProfile);
 
 export default router;

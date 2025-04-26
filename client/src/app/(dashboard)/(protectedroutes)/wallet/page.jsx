@@ -237,7 +237,7 @@ export default function WalletPage() {
       
       // Redirect to wallet page after 2 seconds
       setTimeout(() => {
-        router.push("/wallet/wallet")
+        router.push("/wallet")
       }, 2000)
       
     } catch (error) {

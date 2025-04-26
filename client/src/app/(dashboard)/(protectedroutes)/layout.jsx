@@ -1,7 +1,9 @@
 import React from 'react'
 import ProtectedRoute from '@/components/VerificationGuard'
+import useAuthStore from '@/lib/store/useAuthStore'
 
-const layout = ({children}) => {
+const Layout = ({children}) => {
+
   return (
     <div>
         <ProtectedRoute>
@@ -11,4 +13,4 @@ const layout = ({children}) => {
   )
 }
 
-export default layout
+export default Layout

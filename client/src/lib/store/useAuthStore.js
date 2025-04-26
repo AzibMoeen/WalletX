@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 
 const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
       isAuthenticated: false,
@@ -28,14 +28,18 @@ const useAuthStore = create(
             throw new Error(data.message || 'Login failed');
           }
           
+          // Set token in both state and localStorage for backward compatibility
+          localStorage.setItem('accessToken', data.accessToken);
+          // Also store user for backward compatibility with existing code
+          localStorage.setItem('user', JSON.stringify(data.user));
+          
           set({
             user: data.user,
-            accessToken: data.token,
+            accessToken: data.accessToken,
             isAuthenticated: true,
             isLoading: false,
           });
           
-          localStorage.setItem('accessToken', data.token);
           return data;
         } catch (error) {
           set({ 
@@ -78,17 +82,37 @@ const useAuthStore = create(
         }
       },
       
-      // Fetch current user
       fetchUser: async () => {
+        if (get().accessToken && get().user) {
+          return; 
+        }
+        
         const token = localStorage.getItem('accessToken');
         if (!token) {
-          set({ user: null, isAuthenticated: false });
+          set({ user: null, isAuthenticated: false, accessToken: null });
+          localStorage.removeItem('user');
           return;
+        }
+        
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          try {
+            const userData = JSON.parse(storedUser);
+            set({
+              user: userData,
+              isAuthenticated: true,
+              accessToken: token,
+            });
+            return;
+          } catch (e) {
+            
+          }
         }
         
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch('http://localhost:8000/api/auth/me', {
+          // Use the correct endpoint - '/profile' instead of '/me'
+          const response = await fetch('http://localhost:8000/api/auth/profile', {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
@@ -100,6 +124,8 @@ const useAuthStore = create(
             throw new Error(data.message || 'Failed to fetch user');
           }
           
+          localStorage.setItem('user', JSON.stringify(data.user));
+          
           set({
             user: data.user,
             isAuthenticated: true,
@@ -107,20 +133,17 @@ const useAuthStore = create(
             accessToken: token,
           });
         } catch (error) {
+          console.error("Error fetching user profile:", error);
           set({ 
             isLoading: false, 
             error: error.message,
-            user: null,
-            isAuthenticated: false,
-            accessToken: null,
           });
-          localStorage.removeItem('accessToken');
         }
       },
       
-      // Logout action
       logout: () => {
         localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
         set({
           user: null,
           accessToken: null,
@@ -128,12 +151,10 @@ const useAuthStore = create(
         });
       },
       
-      // Clear error state
       clearError: () => set({ error: null }),
     }),
     {
       name: 'auth-storage',
-      // Only persist these fields
       partialize: (state) => ({ 
         user: state.user,
         accessToken: state.accessToken,

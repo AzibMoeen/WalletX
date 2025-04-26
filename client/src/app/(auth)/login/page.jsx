@@ -1,27 +1,28 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { Wallet, AlertCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-// Import shadcn components
+import useAuthStore from "@/lib/store/useAuthStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Alert,AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 
 const Login = () => {
-  const [isLoading, setIsLoading] = useState(false)
   const [serverError, setServerError] = useState("")
   const router = useRouter()
-  const user = localStorage.getItem("user")
-  const accessToken = localStorage.getItem("accessToken")
-  if (user && accessToken) {
-    router.push("/")
-  }
+  const { login, isAuthenticated, isLoading, error, clearError } = useAuthStore()
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/wallet")
+    }
+  }, [isAuthenticated, router])
 
   const {
     register,
@@ -30,35 +31,13 @@ const Login = () => {
   } = useForm({ mode: "onChange" })
 
   const onSubmit = async (data) => {
-    setIsLoading(true)
     setServerError("")
+    clearError()
 
     try {
-      // API call to backend
-      const response = await fetch("http://localhost:8000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.message || "Login failed")
-      }
-
-      // Store token in localStorage or use cookies
-      localStorage.setItem("accessToken", result.accessToken)
-      localStorage.setItem("user", JSON.stringify(result.user))
-      console.log(result.user)
-      // Redirect to dashboard
-      router.push("/")
+      await login(data)
     } catch (error) {
       setServerError(error.message)
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -75,10 +54,10 @@ const Login = () => {
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {serverError && (
+            {(serverError || error) && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{serverError}</AlertDescription>
+                <AlertDescription>{serverError || error}</AlertDescription>
               </Alert>
             )}
 

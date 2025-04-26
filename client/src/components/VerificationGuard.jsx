@@ -1,57 +1,62 @@
-"use client"
+"use client";
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import useAuthStore from '@/lib/store/useAuthStore';
+import { toast } from 'sonner';
 
 const ProtectedRoute = ({ children, requireVerification = false }) => {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
+  const { user, isAuthenticated, fetchUser, isLoading } = useAuthStore();
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
-    const checkAuth = () => {
+    let isMounted = true;
+
+    const checkAuth = async () => {
       try {
-        // Get token and user data from local storage
-        const token = localStorage.getItem('accessToken');
-        const userData = JSON.parse(localStorage.getItem('user') || '{}');
-        
-        // Check if token exists and is valid
-        if (!token) {
-         
-          
-          router.push('/login');
-          
+        // ⚡️ Only fetch if user is NOT already available
+        if (!user) {
+          await fetchUser();
+        }
+
+        const currentUser = user || useAuthStore.getState().user; // in case user is updated after fetchUser
+
+        if (!isAuthenticated || !currentUser) {
+          if (isMounted) {
+            toast.success("Please log in to access this page.");
+            router.replace('/login');
+          }
           return;
         }
-        
-        setIsAuthenticated(true);
-        
-        // Check verification if required
-        if (requireVerification) {
-          if (!userData.verified) {
-            toast.error("You need to verify your account to access this page.");
-            router.push('/verification');
-            return;
+
+        if (requireVerification && !currentUser.verified) {
+          if (isMounted) {
+            toast.success("Please verify your account to access this page.");
+            router.replace('/verification');
           }
-          setIsVerified(true);
+          return;
         }
-        
-        setLoading(false);
+
       } catch (error) {
         console.error("Authentication check failed:", error);
-        
-        router.push('/login');
+        router.replace('/login');
+      } finally {
+        if (isMounted) {
+          setCheckingAuth(false);
+        }
       }
     };
 
     checkAuth();
-  }, [router, requireVerification]);
 
-  // Show loading state
-  if (loading) {
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchUser, isAuthenticated, requireVerification, router, user]);
+
+  if (checkingAuth || isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="animate-spin h-10 w-10 text-primary" />
@@ -59,12 +64,7 @@ const ProtectedRoute = ({ children, requireVerification = false }) => {
     );
   }
 
-
-  if (requireVerification) {
-    return isAuthenticated && isVerified ? children : null;
-  }
-
-  return isAuthenticated ? children : null;
-}
+  return children;
+};
 
 export default ProtectedRoute;

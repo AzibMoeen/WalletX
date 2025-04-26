@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import useAuthStore from "@/lib/store/useAuthStore"
 
 import { UserPlus, AlertCircle, Loader2 } from "lucide-react"
 
@@ -15,9 +16,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 const Register = () => {
-  const [isLoading, setIsLoading] = useState(false)
   const [serverError, setServerError] = useState("")
   const router = useRouter()
+  const { register: registerUser, isLoading, error, clearError, isAuthenticated } = useAuthStore()
+  
+  // Handle authenticated user redirect with useEffect
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/wallet")
+    }
+  }, [isAuthenticated, router])
+  
   const {
     register,
     handleSubmit,
@@ -29,8 +38,9 @@ const Register = () => {
   const password = watch("password")
 
   const onSubmit = async (data) => {
-    setIsLoading(true)
+    // Clear previous errors
     setServerError("")
+    clearError()
 
     try {
       const { confirmPassword, fullName, mobile, ...rest } = data
@@ -41,25 +51,16 @@ const Register = () => {
         ...rest,
       }
 
-      const response = await fetch("http://localhost:8000/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(registrationData),
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.message || "Registration failed")
-      }
-
+      // Use the register method from auth store
+      await registerUser(registrationData)
+      
       reset()
+      // Redirect to login page after successful registration
       router.push("/login")
   
     } catch (error) {
+      // The error is already handled by the store, but we can also set a local error
       setServerError(error.message)
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -76,10 +77,10 @@ const Register = () => {
           </CardHeader>
 
           <CardContent>
-            {serverError && (
+            {(serverError || error) && (
               <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{serverError}</AlertDescription>
+                <AlertDescription>{serverError || error}</AlertDescription>
               </Alert>
             )}
 
