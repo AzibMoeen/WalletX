@@ -3,6 +3,7 @@ import { create } from 'zustand';
 const useWalletStore = create((set, get) => ({
   balance: 0,
   transactions: [],
+  requests: [],
   isLoading: false,
   error: null,
   
@@ -13,7 +14,7 @@ const useWalletStore = create((set, get) => ({
     
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch('http://localhost:8000/api/transaction/balance', {
+      const response = await fetch('http://localhost:8000/api/transactions/balance', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -26,11 +27,11 @@ const useWalletStore = create((set, get) => ({
       }
       
       set({
-        balance: data.balance,
+        balance: data.wallet,
         isLoading: false,
       });
       
-      return data.balance;
+      return data.wallet;
     } catch (error) {
       set({ 
         isLoading: false, 
@@ -39,14 +40,18 @@ const useWalletStore = create((set, get) => ({
     }
   },
   
-  // Fetch transactions
-  fetchTransactions: async () => {
+  // Fetch transactions (with optional period filter)
+  fetchTransactions: async (period = null) => {
     const token = localStorage.getItem('accessToken');
     if (!token) return;
     
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch('http://localhost:8000/api/transaction/history', {
+      const url = period 
+        ? `http://localhost:8000/api/transactions/filtered-history?period=${period}`
+        : 'http://localhost:8000/api/transactions/history';
+        
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -60,10 +65,11 @@ const useWalletStore = create((set, get) => ({
       
       set({
         transactions: data.transactions,
+        stats: data.stats || null,
         isLoading: false,
       });
       
-      return data.transactions;
+      return data;
     } catch (error) {
       set({ 
         isLoading: false, 
@@ -79,7 +85,7 @@ const useWalletStore = create((set, get) => ({
     
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch('http://localhost:8000/api/transaction/transfer', {
+      const response = await fetch('http://localhost:8000/api/transactions/send', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -116,7 +122,7 @@ const useWalletStore = create((set, get) => ({
     
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch('http://localhost:8000/api/transaction/deposit', {
+      const response = await fetch('http://localhost:8000/api/transactions/deposit', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -146,7 +152,119 @@ const useWalletStore = create((set, get) => ({
     }
   },
   
-  // Clear error state
+  // Request money from user
+  requestMoney: async (requestData) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch('http://localhost:8000/api/transactions/request', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Money request failed');
+      }
+      
+      // Update requests list
+      get().fetchMoneyRequests();
+      
+      set({ isLoading: false });
+      return data;
+    } catch (error) {
+      set({ 
+        isLoading: false, 
+        error: error.message 
+      });
+      throw error;
+    }
+  },
+  
+  // Pay a money request
+  payMoneyRequest: async (requestId) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch('http://localhost:8000/api/transactions/pay-request', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ requestId }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Payment failed');
+      }
+      
+      // Update balance, transactions, and requests
+      get().fetchBalance();
+      get().fetchTransactions();
+      get().fetchMoneyRequests();
+      
+      set({ isLoading: false });
+      return data;
+    } catch (error) {
+      set({ 
+        isLoading: false, 
+        error: error.message 
+      });
+      throw error;
+    }
+  },
+  
+  // Fetch money requests
+  fetchMoneyRequests: async (type = null) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    
+    set({ isLoading: true, error: null });
+    try {
+      const url = type 
+        ? `http://localhost:8000/api/transactions/requests?type=${type}`
+        : 'http://localhost:8000/api/transactions/requests';
+        
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      const data = await response.json();
+      console.log(data);
+      console.log("Fetched money requests:", data.requests);
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch money requests');
+      }
+      
+      set({
+        requests: data.requests,
+        isLoading: false,
+      });
+      
+      return data.requests;
+    } catch (error) {
+      set({ 
+        isLoading: false, 
+        error: error.message 
+      });
+    }
+  },
+  
   clearError: () => set({ error: null }),
 }));
 

@@ -263,17 +263,17 @@ export default function WalletPage() {
   }
 
   return (
-    <div className="container mx-auto py-6 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-6">Send & Receive Money</h1>
+    <div className="container mx-auto px-4 py-4 md:py-6 max-w-4xl">
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 md:mb-6">Send & Receive Money</h1>
       
       <Tabs defaultValue="send" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsList className="grid w-full grid-cols-2 mb-4 md:mb-6">
           <TabsTrigger value="send">Send Money</TabsTrigger>
           <TabsTrigger value="receive">Receive Money</TabsTrigger>
         </TabsList>
         
         <TabsContent value="send">
-          <div className="grid gap-6 md:grid-cols-12">
+          <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-12">
             <div className="md:col-span-4 space-y-4">
               <BalanceCard 
                 wallet={wallet} 
@@ -307,7 +307,7 @@ export default function WalletPage() {
         </TabsContent>
         
         <TabsContent value="receive">
-          <div className="grid gap-6 md:grid-cols-12">
+          <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-12">
             {/* Balance Cards */}
             <div className="md:col-span-4 space-y-4">
               <BalanceCard 

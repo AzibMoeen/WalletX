@@ -193,10 +193,10 @@ export default function DepositPage() {
   }
 
   return (
-    <div className="container mx-auto py-6 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-6">Add Funds to Wallet</h1>
+    <div className="container mx-auto px-4 py-4 md:py-6 max-w-4xl">
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 md:mb-6">Add Funds to Wallet</h1>
       
-      <div className="grid gap-6 md:grid-cols-12">
+      <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-12">
         {/* Sidebar */}
         <div className="md:col-span-4 space-y-4">
           <BalanceCard 
@@ -217,11 +217,11 @@ export default function DepositPage() {
         {/* Deposit Form */}
         <div className="md:col-span-8">
           <Card>
-            <CardHeader>
-              <CardTitle>Deposit Funds</CardTitle>
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-lg md:text-xl">Deposit Funds</CardTitle>
               <CardDescription>Add money to your wallet from various sources</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
               <DepositOptionsSelector 
                 selectedMethod={depositMethod} 
                 handleMethodChange={handleMethodChange} 

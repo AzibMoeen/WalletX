@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Transaction } from "../models/transaction.model.js";
 import { Wallet } from "../models/wallet.model.js";
 import { User } from "../models/user.model.js";
@@ -357,5 +358,295 @@ export const getAllUsersForTransfer = async (req, res) => {
   } catch (error) {
     console.error("Error fetching users for transfer:", error);
     return res.status(500).json({ message: "Failed to fetch users" });
+  }
+};
+
+// Adding new functions for money requests
+
+// Request money from another user
+export const requestMoney = async (req, res) => {
+  try {
+    const { targetUserId, targetEmail, amount, currency, notes } = req.body;
+    const requesterId = req.user._id;
+    
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ message: "Invalid amount" });
+    }
+    
+    let targetUser;
+    
+    // Find target user either by ID or email
+    if (targetUserId) {
+      targetUser = await User.findById(targetUserId);
+    } else if (targetEmail) {
+      targetUser = await User.findOne({ email: targetEmail });
+    } else {
+      return res.status(400).json({ message: "Target user ID or email is required" });
+    }
+    
+    if (!targetUser) {
+      return res.status(404).json({ message: "Target user not found" });
+    }
+    
+    if (targetUser._id.toString() === requesterId.toString()) {
+      return res.status(400).json({ message: "Cannot request money from yourself" });
+    }
+    
+    // Create money request transaction
+    const transaction = await Transaction.create({
+      user: requesterId,
+      recipient: targetUser._id,
+      type: 'request',
+      amount,
+      currencyFrom: currency,
+      notes,
+      status: 'pending'
+    });
+    
+    return res.status(201).json({
+      message: "Money request sent successfully",
+      transaction
+    });
+  } catch (error) {
+    console.error("Error requesting money:", error);
+    return res.status(500).json({ message: error.message || "Failed to request money" });
+  }
+};
+
+// Pay a money request
+export const payRequest = async (req, res) => {
+  try {
+    const { requestId } = req.body;
+    const payerId = req.user._id;
+    
+    // Find the request transaction
+    const requestTransaction = await Transaction.findOne({
+      _id: requestId,
+      status: 'pending',
+      type: 'request'
+    }).populate('user', 'fullname email');
+    
+    if (!requestTransaction) {
+      return res.status(404).json({ message: "Money request not found or already processed" });
+    }
+    
+    // Check if this user is the recipient of the request
+    if (requestTransaction.recipient.toString() !== payerId.toString()) {
+      return res.status(403).json({ message: "You are not authorized to pay this request" });
+    }
+    
+    // Check if payer has sufficient balance
+    const payerWallet = await Wallet.findOne({ user: payerId });
+    const currency = requestTransaction.currencyFrom;
+    const amount = requestTransaction.amount;
+    
+    const balance = payerWallet?.balances.find(b => b.currency === currency)?.amount || 0;
+    
+    if (balance < amount) {
+      return res.status(400).json({ message: "Insufficient funds" });
+    }
+    
+    // Update request transaction status
+    requestTransaction.status = 'completed';
+    await requestTransaction.save();
+    
+    // Create payment transaction for payer
+    const paymentTransaction = await Transaction.create({
+      user: payerId,
+      recipient: requestTransaction.user._id,
+      type: 'payment',
+      amount,
+      currencyFrom: currency,
+      notes: `Payment for request: ${requestTransaction.reference}`,
+      status: 'completed'
+    });
+    
+    // Create receive transaction for requester
+    const receiveTransaction = await Transaction.create({
+      user: requestTransaction.user._id,
+      sender: payerId,
+      type: 'receive',
+      amount,
+      currencyFrom: currency,
+      notes: `Received payment for request: ${requestTransaction.reference}`,
+      status: 'completed'
+    });
+    
+    // Update wallet balances
+    await updateWalletBalance(payerId, currency, -amount);
+    await updateWalletBalance(requestTransaction.user._id, currency, amount);
+    
+    return res.status(200).json({
+      message: "Money request paid successfully",
+      transaction: paymentTransaction
+    });
+  } catch (error) {
+    console.error("Error paying money request:", error);
+    return res.status(500).json({ message: error.message || "Failed to pay money request" });
+  }
+};
+
+// Get all money requests for a user (both sent and received)
+export const getMoneyRequests = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { status, type, limit = 20, page = 1 } = req.query;
+    
+    // Construct the query based on filters
+    let query = {};
+    
+    if (type === 'sent') {
+      console.log("Fetching sent requests for user:", userId);
+      query = { user: userId, type: 'request' };
+    } else if (type === 'received') {
+      query = { recipient: userId, type: 'request' };
+    } else {
+      console.log("Fetching all requests for user alll:", userId);
+      // Default: get both sent and received requests
+      query = {
+        $or: [
+          { user: userId, type: 'request' }, // Requests sent by user
+          { recipient: userId, type: 'request' } // Requests received by user
+        ]
+      };
+    }
+    
+    // Add status filter if provided
+    if (status) {
+      query.status = status;
+    }
+    
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    // Use lean() for better performance
+    const requests = await Transaction.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .populate('user', 'fullname email')
+      .populate('recipient', 'fullname email')
+      .lean();
+      console.log("Fetched requests:", requests);
+    
+    // Count total documents for pagination
+    const total = await Transaction.countDocuments(query);
+    
+    // Process results to handle any null references from population
+    const processedRequests = requests.map(request => ({
+      ...request,
+      user: request.user || { _id: null, fullname: 'Unknown User', email: 'unknown@example.com' },
+      recipient: request.recipient || { _id: null, fullname: 'Unknown User', email: 'unknown@example.com' }
+    }));
+    
+    return res.status(200).json({
+      requests: processedRequests,
+      pagination: {
+        total,
+        page: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit)) || 1
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching money requests:", error);
+    return res.status(500).json({ 
+      message: "Failed to fetch money requests", 
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+export const getFilteredTransactionHistory = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { type, currency, period, limit = 20, page = 1 } = req.query;
+    
+    const query = { user: userId };
+    
+    if (type) {
+      query.type = type;
+    }
+    
+    if (currency) {
+      query.currencyFrom = currency;
+    }
+    
+    // Apply time period filter
+    if (period) {
+      const now = new Date();
+      let startDate;
+      
+      switch (period) {
+        case 'daily':
+          startDate = new Date(now.setHours(0, 0, 0, 0));
+          break;
+        case 'weekly':
+          const day = now.getDay();
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - day); // Start of current week (Sunday)
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        case 'monthly':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1); // Start of current month
+          break;
+        default:
+          startDate = null;
+      }
+      
+      if (startDate) {
+        query.createdAt = { $gte: startDate };
+      }
+    }
+    
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const transactions = await Transaction.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .populate('recipient', 'fullname email')
+      .populate('sender', 'fullname email');
+    
+    const total = await Transaction.countDocuments(query);
+    
+    // Calculate spending statistics
+    const totalSpent = await Transaction.aggregate([
+      { 
+        $match: { 
+          user: new mongoose.Types.ObjectId(userId),
+          type: { $in: ['send', 'payment', 'withdraw'] },
+          ...(currency ? { currencyFrom: currency } : {}),
+          ...(period && query.createdAt ? { createdAt: query.createdAt } : {})
+        } 
+      },
+      { $group: { _id: '$currencyFrom', total: { $sum: '$amount' } } }
+    ]);
+    
+    const totalReceived = await Transaction.aggregate([
+      { 
+        $match: { 
+          user: new mongoose.Types.ObjectId(userId),
+          type: { $in: ['receive', 'deposit'] },
+          ...(currency ? { currencyFrom: currency } : {}),
+          ...(period && query.createdAt ? { createdAt: query.createdAt } : {})
+        } 
+      },
+      { $group: { _id: '$currencyFrom', total: { $sum: '$amount' } } }
+    ]);
+    
+    return res.status(200).json({
+      transactions,
+      stats: {
+        spent: totalSpent,
+        received: totalReceived
+      },
+      pagination: {
+        total,
+        page: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching filtered transaction history:", error);
+    return res.status(500).json({ message: "Failed to fetch transaction history" });
   }
 };

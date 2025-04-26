@@ -228,11 +228,11 @@ export default function ExchangePage() {
   }
 
   return (
-    <div className="container mx-auto py-6 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-6">Currency Exchange</h1>
+    <div className="container mx-auto px-4 py-4 md:py-6 max-w-4xl">
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 md:mb-6">Currency Exchange</h1>
       
       {success && (
-        <Alert className="mb-6 bg-green-50 text-green-800 border-green-200">
+        <Alert className="mb-4 md:mb-6 bg-green-50 text-green-800 border-green-200">
           <Check className="h-4 w-4" />
           <AlertTitle>Success!</AlertTitle>
           <AlertDescription>
@@ -242,14 +242,14 @@ export default function ExchangePage() {
       )}
       
       {error && (
-        <Alert className="mb-6 bg-red-50 text-red-800 border-red-200">
+        <Alert className="mb-4 md:mb-6 bg-red-50 text-red-800 border-red-200">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
       
-      <div className="grid gap-6 md:grid-cols-12">
+      <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-12">
         {/* Sidebar */}
         <div className="md:col-span-4 space-y-4">
           <BalanceCard 

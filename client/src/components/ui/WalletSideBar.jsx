@@ -21,9 +21,6 @@ import { Button } from "./button"
 export default function WalletLayout({ children }) {
   const pathname = usePathname()
 
-  
-
-
   const handleLogout = async () => {
     try {
       // Get the token before removing it from localStorage
@@ -67,18 +64,19 @@ export default function WalletLayout({ children }) {
     { id: "withdraw", label: "Withdraw", icon: CreditCard, href: "/withdraw" },
     { id: "exchange", label: "Exchange", icon: ArrowLeftRight, href: "/exchange" },
     { id: "request", label: "Request", icon: MessageSquareText, href: "/request" },
+    { id: "transactions" , label: "Transactions", icon: ArrowLeftRight, href: "/wallet/transactions" },
   ]
 
   return (
     <SidebarProvider>
       <div className="flex min-h-screen">
         <Sidebar className="border-r">
-          <SidebarHeader className="px-4 py-6">
+          <SidebarHeader className="px-4 py-4 md:py-6">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
                 <Wallet className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="text-xl font-semibold">FinWallet</span>
+              <span className="text-lg md:text-xl font-semibold">FinWallet</span>
             </div>
           </SidebarHeader>
           <SidebarContent>
@@ -86,41 +84,40 @@ export default function WalletLayout({ children }) {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label}>
-                    <Link href={item.href} className="flex items-center gap-3">
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.label}</span>
+                    <Link href={item.href} className="flex items-center gap-2 md:gap-3 py-2 text-sm md:text-base">
+                      <item.icon className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
+                      <span className="truncate">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarContent>
-          <SidebarFooter className="p-4 border-t">
-            <div className="flex items-center gap-3 px-2 py-3">
-              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+          <SidebarFooter className="p-3 md:p-4 border-t">
+            <div className="flex flex-col sm:flex-row items-center gap-2 md:gap-3 px-2 py-2 md:py-3">
+              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                 <span className="text-xs font-medium">JD</span>
               </div>
-              <div className="flex flex-col">
-              <Button 
-                variant="outline" className="w-full" onClick={handleLogout}>
-                <span className="text-sm font-medium">Logout</span>
-                <ArrowLeftRight className="h-4 w-4 ml-2" />
-              </Button>
-
-                <span className="text-sm font-medium">John Doe</span>
-                <span className="text-xs text-muted-foreground">Premium Account</span>
+              <div className="flex flex-col w-full">
+                <span className="text-sm font-medium text-center sm:text-left">John Doe</span>
+                <span className="text-xs text-muted-foreground text-center sm:text-left mb-2 sm:mb-0">Premium Account</span>
+                <Button 
+                  variant="outline" className="w-full mt-1 sm:mt-2 text-xs md:text-sm h-8 md:h-9" onClick={handleLogout}>
+                  <span className="font-medium">Logout</span>
+                  <ArrowLeftRight className="h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2" />
+                </Button>
               </div>
             </div>
           </SidebarFooter>
         </Sidebar>
         <div className="flex-1">
-          <div className="flex h-16 items-center border-b px-6">
-            <SidebarTrigger className="mr-4" />
-            <h1 className="text-xl font-semibold">
+          <div className="flex h-12 md:h-16 items-center border-b px-3 md:px-6">
+            <SidebarTrigger className="mr-2 md:mr-4" />
+            <h1 className="text-base md:text-xl font-semibold truncate">
               {menuItems.find((item) => item.href === pathname)?.label || "Dashboard"}
             </h1>
           </div>
-          <div className="container mx-auto max-w-6xl py-6 px-4 md:px-6">
+          <div className="container mx-auto max-w-6xl py-3 md:py-6 px-3 md:px-6">
             {children}
           </div>
         </div>

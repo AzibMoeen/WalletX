@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 const ProtectedRoute = ({ children, requireVerification = false }) => {
@@ -22,7 +21,7 @@ const ProtectedRoute = ({ children, requireVerification = false }) => {
         // Check if token exists and is valid
         if (!token) {
          
-          toast.error("You need to log in to access this page.");
+          
           router.push('/login');
           
           return;

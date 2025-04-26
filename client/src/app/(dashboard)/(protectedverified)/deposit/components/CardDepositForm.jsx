@@ -22,9 +22,9 @@ const CardDepositForm = ({
   error
 }) => {
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6 mt-4">
       {success && (
-        <Alert className="mb-6 bg-green-50 text-green-800 border-green-200">
+        <Alert className="mb-4 md:mb-6 bg-green-50 text-green-800 border-green-200">
           <Check className="h-4 w-4" />
           <AlertTitle>Success!</AlertTitle>
           <AlertDescription>
@@ -34,7 +34,7 @@ const CardDepositForm = ({
       )}
       
       {error && (
-        <Alert className="mb-6 bg-red-50 text-red-800 border-red-200">
+        <Alert className="mb-4 md:mb-6 bg-red-50 text-red-800 border-red-200">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
@@ -43,8 +43,8 @@ const CardDepositForm = ({
       
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="amount">Amount</Label>
-          <div className="flex">
+          <Label htmlFor="amount" className="text-sm md:text-base">Amount</Label>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
             <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <span className="text-gray-500">{getCurrencySymbol(formData.currency)}</span>
@@ -54,7 +54,7 @@ const CardDepositForm = ({
                 name="amount"
                 type="number"
                 placeholder="0.00"
-                className="pl-8"
+                className="pl-8 h-10"
                 value={formData.amount}
                 onChange={handleChange}
                 required
@@ -64,7 +64,7 @@ const CardDepositForm = ({
               value={formData.currency}
               onValueChange={(value) => handleSelectChange("currency", value)}
             >
-              <SelectTrigger className="w-[110px] ml-2">
+              <SelectTrigger className="w-full sm:w-[110px] sm:ml-2 h-10">
                 <SelectValue placeholder="Currency" />
               </SelectTrigger>
               <SelectContent>
@@ -79,19 +79,20 @@ const CardDepositForm = ({
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="cardholderName">Cardholder Name</Label>
+          <Label htmlFor="cardholderName" className="text-sm md:text-base">Cardholder Name</Label>
           <Input
             id="cardholderName"
             name="cardholderName"
             placeholder="John Doe"
             value={formData.cardholderName}
             onChange={handleChange}
+            className="h-10"
             required
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="cardNumber">Card Number</Label>
+          <Label htmlFor="cardNumber" className="text-sm md:text-base">Card Number</Label>
           <Input
             id="cardNumber"
             name="cardNumber"
@@ -99,13 +100,14 @@ const CardDepositForm = ({
             value={formData.cardNumber}
             onChange={handleChange}
             maxLength={19}
+            className="h-10"
             required
           />
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="expiryDate">Expiry Date</Label>
+            <Label htmlFor="expiryDate" className="text-sm md:text-base">Expiry Date</Label>
             <Input
               id="expiryDate"
               name="expiryDate"
@@ -113,11 +115,12 @@ const CardDepositForm = ({
               value={formData.expiryDate}
               onChange={handleChange}
               maxLength={5}
+              className="h-10"
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="cvv">CVV</Label>
+            <Label htmlFor="cvv" className="text-sm md:text-base">CVV</Label>
             <Input
               id="cvv"
               name="cvv"
@@ -127,15 +130,16 @@ const CardDepositForm = ({
               value={formData.cvv}
               onChange={handleChange}
               maxLength={4}
+              className="h-10"
               required
             />
           </div>
         </div>
       </div>
       
-      <div className="bg-muted p-4 rounded-lg">
+      <div className="bg-muted p-3 md:p-4 rounded-lg">
         <div className="text-sm font-medium mb-2">Transaction Details</div>
-        <div className="space-y-1 text-sm">
+        <div className="space-y-1 text-xs md:text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Amount</span>
             <span>

@@ -6,75 +6,95 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 const ReceiveMoneyCard = ({ wallet, user }) => {
-  const [copied, setCopied] = useState(false)
+  const [copiedItem, setCopiedItem] = useState(null)
   
-  const copyToClipboard = (text) => {
+  const copyToClipboard = (text, itemType) => {
     navigator.clipboard.writeText(text).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setCopiedItem(itemType)
+      setTimeout(() => setCopiedItem(null), 2000)
     })
   }
+
+  // Handle share functionality if supported by browser
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'My WalletX ID',
+          text: `Here's my WalletX ID: ${wallet.walletId}`,
+        });
+      } catch (error) {
+        console.log('Error sharing:', error);
+      }
+    } else {
+      // Fallback to clipboard if sharing is not supported
+      copyToClipboard(wallet.walletId, 'wallet');
+    }
+  };
   
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Receive Money</CardTitle>
+    <Card className="h-full">
+      <CardHeader className="p-4 md:p-6">
+        <CardTitle className="text-lg md:text-xl">Receive Money</CardTitle>
         <CardDescription>Share your wallet ID to receive funds</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="p-4 md:p-6 pt-0 md:pt-0 space-y-4 md:space-y-6">
         <div className="flex justify-center">
-          <div className="bg-muted p-8 rounded-xl inline-block">
-            <QrCode className="h-32 w-32 mx-auto" />
+          <div className="bg-muted p-4 sm:p-6 md:p-8 rounded-xl inline-block">
+            <QrCode className="h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 mx-auto" />
           </div>
         </div>
         
-        <div className="space-y-3">
-          <Label>Your Wallet ID</Label>
-          <div className="flex">
+        <div className="space-y-2 md:space-y-3">
+          <Label className="text-sm md:text-base">Your Wallet ID</Label>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
             <Input 
               value={wallet.walletId} 
               readOnly 
-              className="font-mono"
+              className="font-mono text-sm truncate h-10"
             />
             <Button 
               variant="outline" 
-              className="ml-2" 
-              onClick={() => copyToClipboard(wallet.walletId)}
+              className="sm:ml-2 h-10" 
+              onClick={() => copyToClipboard(wallet.walletId, 'wallet')}
             >
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copiedItem === 'wallet' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              <span className="ml-2">{copiedItem === 'wallet' ? 'Copied!' : 'Copy'}</span>
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs md:text-sm text-muted-foreground">
             Share this ID with anyone who wants to send you money.
           </p>
         </div>
         
-        <div className="space-y-3">
-          <Label>Your Email</Label>
-          <div className="flex">
+        <div className="space-y-2 md:space-y-3">
+          <Label className="text-sm md:text-base">Your Email</Label>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
             <Input 
               value={user.email} 
               readOnly
+              className="truncate h-10"
             />
             <Button 
               variant="outline" 
-              className="ml-2" 
-              onClick={() => copyToClipboard(user.email)}
+              className="sm:ml-2 h-10" 
+              onClick={() => copyToClipboard(user.email, 'email')}
             >
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copiedItem === 'email' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              <span className="ml-2">{copiedItem === 'email' ? 'Copied!' : 'Copy'}</span>
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs md:text-sm text-muted-foreground">
             Others can also find your wallet using your email address.
           </p>
         </div>
         
-        <div className="flex space-x-2">
-          <Button className="flex-1" variant="outline" onClick={() => copyToClipboard(wallet.walletId)}>
+        <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2">
+          <Button className="w-full sm:flex-1" variant="outline" onClick={() => copyToClipboard(wallet.walletId, 'wallet')}>
             <Copy className="mr-2 h-4 w-4" /> 
             Copy ID
           </Button>
-          <Button className="flex-1" variant="outline">
+          <Button className="w-full sm:flex-1" variant="outline" onClick={handleShare}>
             <Share2 className="mr-2 h-4 w-4" /> 
             Share
           </Button>

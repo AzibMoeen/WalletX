@@ -8,7 +8,11 @@ import {
   getWalletBalance,
   getTransactionHistory,
   getTransactionDetails,
-  getAllUsersForTransfer
+  getAllUsersForTransfer,
+  requestMoney,
+  payRequest,
+  getMoneyRequests,
+  getFilteredTransactionHistory
 } from '../controllers/transaction.controllers.js';
 
 const router = express.Router();
@@ -19,11 +23,17 @@ router.use(verifyJWT);
 // Wallet routes
 router.get('/balance', getWalletBalance);
 
-// User list for transfer (must be before /:transactionId to avoid route matching issues)
+// User list for transfer
 router.get('/users/transfer', getAllUsersForTransfer);
 
-// Transaction routes
+// Transaction history routes
 router.get('/history', getTransactionHistory);
+router.get('/filtered-history', getFilteredTransactionHistory);
+
+// Money requests - must be before dynamic route
+router.get('/requests', getMoneyRequests); 
+
+// Individual transaction details - must be after all specific routes
 router.get('/:transactionId', getTransactionDetails);
 
 // Deposit and withdraw
@@ -35,5 +45,9 @@ router.post('/send', sendMoney);
 
 // Currency exchange
 router.post('/exchange', exchangeCurrency);
+
+// Money requests - POST routes
+router.post('/request', requestMoney);
+router.post('/pay-request', payRequest);
 
 export default router;

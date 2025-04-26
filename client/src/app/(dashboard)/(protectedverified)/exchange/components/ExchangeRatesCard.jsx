@@ -4,10 +4,10 @@ import { RefreshCw } from "lucide-react"
 const ExchangeRatesCard = ({ exchangeRates, getCurrencySymbol, lastUpdated }) => {
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-center">
+      <CardHeader className="p-4 md:p-6 pb-2 md:pb-3">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-0">
           <div>
-            <CardTitle>Exchange Rates</CardTitle>
+            <CardTitle className="text-base md:text-lg">Exchange Rates</CardTitle>
             <CardDescription>Current conversion rates</CardDescription>
           </div>
           <div className="flex items-center text-xs text-muted-foreground">
@@ -16,14 +16,19 @@ const ExchangeRatesCard = ({ exchangeRates, getCurrencySymbol, lastUpdated }) =>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 md:p-6 pt-2 md:pt-3">
         <div className="space-y-2">
           {exchangeRates.map((rate, index) => (
-            <div key={index} className="flex justify-between items-center p-2 rounded-lg border">
+            <div 
+              key={index} 
+              className="flex justify-between items-center p-2 rounded-lg border hover:bg-gray-50 transition-colors"
+            >
               <div className="flex items-center">
-                <span className="font-medium">{rate.from} to {rate.to}</span>
+                <span className="font-medium text-xs sm:text-sm">
+                  {rate.from} <span className="hidden xs:inline">to</span> {rate.to}
+                </span>
               </div>
-              <div className="text-sm">
+              <div className="text-xs sm:text-sm">
                 {getCurrencySymbol(rate.from)}1 = {getCurrencySymbol(rate.to)}{rate.rate.toFixed(4)}
               </div>
             </div>

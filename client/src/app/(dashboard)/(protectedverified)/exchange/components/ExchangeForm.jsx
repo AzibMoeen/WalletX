@@ -26,18 +26,18 @@ const ExchangeForm = ({
   isLoading
 }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Currency Exchange</CardTitle>
+    <Card className="h-full">
+      <CardHeader className="p-4 md:p-6">
+        <CardTitle className="text-lg md:text-xl">Currency Exchange</CardTitle>
         <CardDescription>Convert between different currencies in your wallet</CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
+      <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+          <div className="space-y-6">
             {/* From Currency */}
             <div className="space-y-2">
-              <Label>From</Label>
-              <div className="flex space-x-2">
+              <Label className="text-sm md:text-base">From</Label>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 sm:space-x-2">
                 <div className="relative flex-1">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <span className="text-gray-500">{getCurrencySymbol(fromCurrency)}</span>
@@ -45,7 +45,7 @@ const ExchangeForm = ({
                   <Input
                     type="number"
                     placeholder="0.00"
-                    className="pl-8"
+                    className="pl-8 h-10"
                     value={fromAmount}
                     onChange={handleFromAmountChange}
                     required
@@ -55,7 +55,7 @@ const ExchangeForm = ({
                   value={fromCurrency}
                   onValueChange={handleFromCurrencyChange}
                 >
-                  <SelectTrigger className="w-[120px]">
+                  <SelectTrigger className="w-full sm:w-[120px] h-10">
                     <SelectValue placeholder="Currency" />
                   </SelectTrigger>
                   <SelectContent>
@@ -84,8 +84,8 @@ const ExchangeForm = ({
             
             {/* To Currency */}
             <div className="space-y-2">
-              <Label>To</Label>
-              <div className="flex space-x-2">
+              <Label className="text-sm md:text-base">To</Label>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 sm:space-x-2">
                 <div className="relative flex-1">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <span className="text-gray-500">{getCurrencySymbol(toCurrency)}</span>
@@ -93,7 +93,7 @@ const ExchangeForm = ({
                   <Input
                     type="number"
                     placeholder="0.00"
-                    className="pl-8"
+                    className="pl-8 h-10"
                     value={toAmount}
                     readOnly
                   />
@@ -102,7 +102,7 @@ const ExchangeForm = ({
                   value={toCurrency}
                   onValueChange={handleToCurrencyChange}
                 >
-                  <SelectTrigger className="w-[120px]">
+                  <SelectTrigger className="w-full sm:w-[120px] h-10">
                     <SelectValue placeholder="Currency" />
                   </SelectTrigger>
                   <SelectContent>
@@ -118,9 +118,9 @@ const ExchangeForm = ({
           </div>
           
           {/* Exchange Rate Display */}
-          <div className="bg-muted p-4 rounded-lg">
+          <div className="bg-muted p-3 md:p-4 rounded-lg">
             <div className="text-sm font-medium mb-2">Exchange Details</div>
-            <div className="space-y-1 text-sm">
+            <div className="space-y-1 text-xs md:text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Exchange Rate</span>
                 <span>

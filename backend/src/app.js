@@ -11,9 +11,10 @@ import transactionRoutes from './routes/transaction.routes.js';
 dotenv.config();
 
 const app = express();
-
+    
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin: process.env.CORS_ORIGIN || "http://localhost:3000"|| "https://monkfish-adapted-properly.ngrok-free.app",
+
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true
 }));
