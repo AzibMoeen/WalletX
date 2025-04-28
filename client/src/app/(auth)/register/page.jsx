@@ -7,8 +7,6 @@ import { useRouter } from "next/navigation"
 import useAuthStore from "@/lib/store/useAuthStore"
 
 import { UserPlus, AlertCircle, Loader2 } from "lucide-react"
-
-// Import shadcn components
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -38,7 +36,6 @@ const Register = () => {
   const password = watch("password")
 
   const onSubmit = async (data) => {
-    // Clear previous errors
     setServerError("")
     clearError()
 
@@ -47,19 +44,16 @@ const Register = () => {
 
       const registrationData = {
         fullname: fullName,
-        mobile: Number(mobile), // Convert string to number
+        mobile: Number(mobile), 
         ...rest,
       }
 
-      // Use the register method from auth store
       await registerUser(registrationData)
       
       reset()
-      // Redirect to login page after successful registration
       router.push("/login")
   
     } catch (error) {
-      // The error is already handled by the store, but we can also set a local error
       setServerError(error.message)
     }
   }

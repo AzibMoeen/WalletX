@@ -5,9 +5,9 @@ import { ArrowRight, Plus } from "lucide-react"
 const BalanceCard = ({ wallet, getBalanceDisplay, router, buttonAction = "deposit" }) => {
   const handleButtonClick = () => {
     if (buttonAction === "deposit") {
-      router.push("/wallet/deposit")
+      router.push("/deposit")
     } else if (buttonAction === "withdraw") {
-      router.push("/wallet/request")
+      router.push("/request")
     }
   }
 

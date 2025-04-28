@@ -9,7 +9,7 @@ const CURRENCIES = [
 
 const BalanceCard = ({ wallet, getBalanceDisplay, router, buttonAction = "deposit" }) => {
   const buttonText = buttonAction === "deposit" ? "Add Money" : "View Transactions"
-  const buttonLink = buttonAction === "deposit" ? "/deposit" : "/wallet/transactions"
+  const buttonLink = buttonAction === "deposit" ? "/deposit" : "/transactions"
   
   return (
     <Card className="h-full">

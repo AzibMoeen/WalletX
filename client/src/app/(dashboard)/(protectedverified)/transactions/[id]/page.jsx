@@ -124,7 +124,7 @@ export default function TransactionDetailPage({ params }) {
     }
   }
 
-  // Generate receipt PDF (simplified for demo)
+
   const generateReceipt = () => {
     toast.success("Receipt downloaded successfully")
   }
@@ -132,10 +132,57 @@ export default function TransactionDetailPage({ params }) {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-3xl">
-        <div className="text-center py-20">
-          <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-gray-800 mb-4"></div>
-          <p>Loading transaction details...</p>
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" disabled>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-xl md:text-2xl font-bold">Transaction Details</h1>
+          </div>
+          <Button variant="outline" size="sm" disabled>
+            <Download className="h-4 w-4 mr-2" />
+            <span>Download Receipt</span>
+          </Button>
         </div>
+
+        <Card className="mb-6">
+          <CardHeader className="pb-4">
+            <div className="flex justify-between items-start">
+              <div className="w-full">
+                <div className="h-6 w-48 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div className="h-4 w-36 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div className="p-3 rounded-full bg-gray-200 animate-pulse">
+                <div className="h-5 w-5"></div>
+              </div>
+            </div>
+          </CardHeader>
+          
+          <CardContent className="space-y-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between bg-muted p-4 rounded-lg">
+              <div className="text-center sm:text-left mb-3 sm:mb-0 w-full">
+                <div className="h-4 w-16 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div className="h-8 w-32 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div className="h-6 w-24 bg-gray-200 rounded-full animate-pulse"></div>
+            </div>
+
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map((item) => (
+                <div key={item} className="flex justify-between items-center pb-2 border-b">
+                  <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+          
+          <CardFooter className="flex justify-between border-t pt-5">
+            <Button variant="outline" disabled>
+              <ArrowLeft className="h-4 w-4 mr-2" /> Back to Transactions
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     )
   }
@@ -159,7 +206,7 @@ export default function TransactionDetailPage({ params }) {
         <Alert className="bg-amber-50 border-amber-200 mb-6">
           <AlertDescription className="text-amber-800">Transaction not found</AlertDescription>
         </Alert>
-        <Button variant="outline" onClick={() => router.push("/wallet/transactions")}>
+        <Button variant="outline" onClick={() => router.push("/transactions")}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Transactions
         </Button>
       </div>
@@ -363,7 +410,7 @@ export default function TransactionDetailPage({ params }) {
         </CardContent>
         
         <CardFooter className="flex justify-between border-t pt-5">
-          <Button variant="outline" onClick={() => router.push("/wallet/transactions")}>
+          <Button variant="outline" onClick={() => router.push("/transactions")}>
             <ArrowLeft className="h-4 w-4 mr-2" /> Back to Transactions
           </Button>
           

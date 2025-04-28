@@ -59,7 +59,6 @@ function WalletSidebarInner({ children }) {
     { id: "transactions" , label: "Transactions", icon: ArrowLeftRight, href: "/transactions" },
   ]
 
-  // Extract user name from auth store
   const fullName = user?.fullname || "User"
   const initials = fullName.split(' ')
     .map(name => name[0])
@@ -108,6 +107,24 @@ function WalletSidebarInner({ children }) {
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
+          
+          {user?.isAdmin && (
+            <SidebarMenu className="mt-2">
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/admin')} tooltip="Admin Panel">
+                  <Link 
+                    href="/admin/dashboard" 
+                    className="flex items-center gap-2 md:gap-3 py-2 text-sm md:text-base"
+                    onClick={closeMobileSidebar}
+                  >
+                    <BadgeCheck className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
+                    <span className="truncate">Admin Panel</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          )}
+        
         </SidebarContent>
         <SidebarFooter className="p-3 md:p-4 border-t">
           <div className="flex flex-col sm:flex-row items-center gap-2 md:gap-3 px-2 py-2 md:py-3">
