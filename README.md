@@ -1,4 +1,4 @@
-# WalletX
+# FinWallet
 
 WalletX is a web-based platform designed to provide users with secure digital wallets that support three main currencies: USD, EUR, and PKR. The platform allows users to manage their funds, exchange currencies, send and receive money, and verify their accounts through a secure verification process.
 
