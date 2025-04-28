@@ -34,7 +34,6 @@ export async function getAllUsers(req, res) {
       .skip(skip)
       .limit(parseInt(limit));
     
-    // Get total count for pagination
     const total = await User.countDocuments(query);
     
     return res.status(200).json({
@@ -68,7 +67,6 @@ export async function getUserById(req, res) {
   }
 }
 
-// Delete a user
 export async function deleteUser(req, res) {
   try {
     const { userId } = req.params;
@@ -83,11 +81,9 @@ export async function deleteUser(req, res) {
       return res.status(403).json({ message: "Cannot delete admin user" });
     }
     
-    // Delete associated verification requests
     await PassVerification.deleteMany({ user: userId });
     await GunVerification.deleteMany({ user: userId });
     
-    // Delete the user
     await User.findByIdAndDelete(userId);
     
     return res.status(200).json({ message: "User deleted successfully" });
@@ -97,35 +93,30 @@ export async function deleteUser(req, res) {
   }
 }
 
-// Get all passport verification requests with filtering
 export async function getPassportVerifications(req, res) {
   try {
     const { status, search, sortBy, limit = 20, page = 1 } = req.query;
     
-    // Build the query based on filters
     let query = {};
     
     if (status && status !== 'all') {
       query.status = status;
     }
     
-    // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
-    let sortOptions = { createdAt: -1 }; // Default sort by creation date (newest first)
+    let sortOptions = { createdAt: -1 };
     if (sortBy) {
       const [field, order] = sortBy.split(':');
       sortOptions = { [field]: order === 'desc' ? -1 : 1 };
     }
     
-    // Execute the query with population of user details
     const verifications = await PassVerification.find(query)
       .populate('user', 'fullname email mobile')
       .sort(sortOptions)
       .skip(skip)
       .limit(parseInt(limit));
     
-    // If search is provided, filter by user properties after population
     let filteredVerifications = verifications;
     if (search) {
       const searchLower = search.toLowerCase();
@@ -153,22 +144,18 @@ export async function getPassportVerifications(req, res) {
   }
 }
 
-// Get all gun license verification requests with filtering
 export async function getGunVerifications(req, res) {
   try {
     const { status, search, sortBy, limit = 20, page = 1 } = req.query;
     
-    // Build the query based on filters
     let query = {};
     
     if (status && status !== 'all') {
       query.status = status;
     }
     
-    // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
-    // Build the sort options
     let sortOptions = { createdAt: -1 }; // Default sort by creation date (newest first)
     if (sortBy) {
       const [field, order] = sortBy.split(':');
@@ -182,7 +169,6 @@ export async function getGunVerifications(req, res) {
       .skip(skip)
       .limit(parseInt(limit));
     
-    // If search is provided, filter by user properties after population
     let filteredVerifications = verifications;
     if (search) {
       const searchLower = search.toLowerCase();
@@ -193,7 +179,6 @@ export async function getGunVerifications(req, res) {
       );
     }
     
-    // Get total count for pagination
     const total = await GunVerification.countDocuments(query);
     
     return res.status(200).json({
@@ -210,7 +195,6 @@ export async function getGunVerifications(req, res) {
   }
 }
 
-// Update passport verification status (approve/reject)
 export async function updatePassportVerificationStatus(req, res) {
   try {
     const { verificationId } = req.params;
@@ -229,7 +213,6 @@ export async function updatePassportVerificationStatus(req, res) {
     verification.status = status;
     await verification.save();
     
-    // If verification is approved, check if gun verification is also approved
     if (status === 'verified') {
       // Check if user has a verified gun verification as well
       const gunVerification = await GunVerification.findOne({
@@ -255,7 +238,6 @@ export async function updatePassportVerificationStatus(req, res) {
   }
 }
 
-// Update gun license verification status (approve/reject)
 export async function updateGunVerificationStatus(req, res) {
   try {
     const { verificationId } = req.params;
@@ -274,15 +256,12 @@ export async function updateGunVerificationStatus(req, res) {
     verification.status = status;
     await verification.save();
     
-    // If verification is approved, check if passport verification is also approved
     if (status === 'verified') {
-      // Check if user has a verified passport verification as well
       const passportVerification = await PassVerification.findOne({
         user: verification.user,
         status: 'verified'
       });
       
-      // Only set user as verified if both verifications are approved
       if (passportVerification) {
         await User.findByIdAndUpdate(verification.user, { 
           verified: true 
@@ -300,7 +279,6 @@ export async function updateGunVerificationStatus(req, res) {
   }
 }
 
-// Get dashboard statistics
 export async function getDashboardStats(req, res) {
   try {
     // Get total users count

@@ -57,7 +57,6 @@ export default function UsersPage() {
         throw new Error(`Error: ${response.status}`);
       }
       
-      // Remove the deleted user from the state
       setUsers(users.filter(user => user._id !== userId));
     } catch (error) {
       console.error("Error deleting user:", error);

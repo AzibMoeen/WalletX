@@ -16,12 +16,11 @@ const ProtectedRoute = ({ children, requireVerification = false }) => {
 
     const checkAuth = async () => {
       try {
-        // ⚡️ Only fetch if user is NOT already available
         if (!user) {
           await fetchUser();
         }
 
-        const currentUser = user || useAuthStore.getState().user; // in case user is updated after fetchUser
+        const currentUser = user || useAuthStore.getState().user; 
 
         if (!isAuthenticated || !currentUser) {
           if (isMounted) {

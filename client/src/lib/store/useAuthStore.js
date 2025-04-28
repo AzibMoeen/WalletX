@@ -10,7 +10,7 @@ const useAuthStore = create(
       isLoading: false,
       error: null,
       
-      // Login action
+     
       login: async (credentials) => {
         set({ isLoading: true, error: null });
         try {
@@ -28,7 +28,7 @@ const useAuthStore = create(
             throw new Error(data.message || 'Login failed');
           }
           
-          // Set token in both state and localStorage for backward compatibility
+          
           localStorage.setItem('accessToken', data.accessToken);
           // Also store user for backward compatibility with existing code
           localStorage.setItem('user', JSON.stringify(data.user));
@@ -111,7 +111,6 @@ const useAuthStore = create(
         
         set({ isLoading: true, error: null });
         try {
-          // Use the correct endpoint - '/profile' instead of '/me'
           const response = await fetch('http://localhost:8000/api/auth/profile', {
             headers: {
               'Authorization': `Bearer ${token}`,

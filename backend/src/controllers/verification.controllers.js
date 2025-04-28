@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 import fs from "fs";
 
-// Fixed function name (removed extra 's')
+
 export async function PasssVerification(req, res) {
     try {
         const { passwordCnic, fullName, dob } = req.body;
@@ -59,7 +59,7 @@ export async function PasssVerification(req, res) {
     }
 }
 
-// New Gun Verification controller
+
 export async function GunnVerification(req, res) {
     try {
         const { licenseNumber, cnic, issueDate, expiryDate } = req.body;
@@ -116,7 +116,7 @@ export async function GunnVerification(req, res) {
     }
 }
 
-// Gun verification admin functions
+
 export async function getAllGunVerifications(req, res) {
     try {
         const gunVerifications = await GunVerification.find({status:"pending"}).populate("user", "name email");
@@ -161,7 +161,7 @@ export async function updateGunVerification(req, res) {
                 status: 'verified'
             });
             
-            // Only set user as verified if both verifications are approved
+            
             if (passportVerification) {
                 await User.findByIdAndUpdate(gunVerification.user, { 
                     verified: true 
@@ -243,7 +243,7 @@ export async function updatePassVerification(req, res) {
         passVerification.status = status;
         await passVerification.save();
         
-        // If verification is approved, check if both verifications are complete
+        
         if (status === 'verified') {
             // Check if user has a verified gun verification as well
             const gunVerification = await GunVerification.findOne({
@@ -251,7 +251,7 @@ export async function updatePassVerification(req, res) {
                 status: 'verified'
             });
             
-            // Only set user as verified if both verifications are approved
+            
             if (gunVerification) {
                 await User.findByIdAndUpdate(passVerification.user, { 
                     verified: true 

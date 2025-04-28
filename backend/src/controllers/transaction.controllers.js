@@ -502,23 +502,22 @@ export const getMoneyRequests = async (req, res) => {
       query = { recipient: userId, type: 'request' };
     } else {
       console.log("Fetching all requests for user alll:", userId);
-      // Default: get both sent and received requests
       query = {
         $or: [
-          { user: userId, type: 'request' }, // Requests sent by user
-          { recipient: userId, type: 'request' } // Requests received by user
+          { user: userId, type: 'request' }, 
+          { recipient: userId, type: 'request' } 
         ]
       };
     }
     
-    // Add status filter if provided
+    
     if (status) {
       query.status = status;
     }
     
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
-    // Use lean() for better performance
+    
     const requests = await Transaction.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -528,10 +527,10 @@ export const getMoneyRequests = async (req, res) => {
       .lean();
       console.log("Fetched requests:", requests);
     
-    // Count total documents for pagination
+    
     const total = await Transaction.countDocuments(query);
     
-    // Process results to handle any null references from population
+ 
     const processedRequests = requests.map(request => ({
       ...request,
       user: request.user || { _id: null, fullname: 'Unknown User', email: 'unknown@example.com' },
@@ -570,7 +569,6 @@ export const getFilteredTransactionHistory = async (req, res) => {
       query.currencyFrom = currency;
     }
     
-    // Apply time period filter
     if (period) {
       const now = new Date();
       let startDate;
@@ -582,11 +580,11 @@ export const getFilteredTransactionHistory = async (req, res) => {
         case 'weekly':
           const day = now.getDay();
           startDate = new Date(now);
-          startDate.setDate(now.getDate() - day); // Start of current week (Sunday)
+          startDate.setDate(now.getDate() - day); 
           startDate.setHours(0, 0, 0, 0);
           break;
         case 'monthly':
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1); // Start of current month
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
           break;
         default:
           startDate = null;
@@ -608,7 +606,6 @@ export const getFilteredTransactionHistory = async (req, res) => {
     
     const total = await Transaction.countDocuments(query);
     
-    // Calculate spending statistics
     const totalSpent = await Transaction.aggregate([
       { 
         $match: { 

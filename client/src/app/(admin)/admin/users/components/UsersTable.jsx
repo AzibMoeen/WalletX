@@ -16,6 +16,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useEffect, useState } from "react"
+import useAuthStore from "@/lib/store/useAuthStore"
 
 export function UsersTable({ 
   users, 
@@ -24,6 +26,17 @@ export function UsersTable({
   setSelectedUser, 
   setDeleteDialogOpen 
 }) {
+  const { user: currentUser } = useAuthStore();
+  const [filteredUsers, setFilteredUsers] = useState([]);
+
+  useEffect(() => {
+    if (users && users.length > 0 && currentUser) {
+      setFilteredUsers(users.filter(user => user._id !== currentUser._id));
+    } else {
+      setFilteredUsers(users || []);
+    }
+  }, [users, currentUser]);
+
   return (
     <>
       {loading ? (
@@ -43,14 +56,14 @@ export function UsersTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   No users found. Try a different search.
                 </TableCell>
               </TableRow>
             ) : (
-              users.map((user) => (
+              filteredUsers.map((user) => (
                 <TableRow key={user._id}>
                   <TableCell className="font-medium">
                     {user.fullname}

@@ -10,11 +10,9 @@ import {
 
 const router = express.Router();
 
-// Submission routes
 router.post("/passport", verifyJWT, upload.single('passportImage'), submitPassportVerification);
 router.post("/gun", verifyJWT, upload.single('gunImage'), submitGunVerification);
 
-// User verification status routes
 router.get("/passport/me", verifyJWT, getUserPassportVerifications);
 router.get("/gun/me", verifyJWT, getUserGunVerifications);
 
