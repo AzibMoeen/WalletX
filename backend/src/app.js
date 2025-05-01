@@ -17,7 +17,9 @@ const allowedOrigins = [
     process.env.CORS_ORIGIN, 
     "http://localhost:3000",
     "https://monkfish-adapted-properly.ngrok-free.app",
-    "https://wallet-x-gn6u-git-master-azibmoeens-projects.vercel.app/"
+    "https://wallet-x-gn6u-git-master-azibmoeens-projects.vercel.app",
+    "https://walletx-production.up.railway.app",
+    "https://new-origin.example.com",
 ];
 
 // Setup CORS with proper origin handling
