@@ -32,10 +32,10 @@ export default function VerificationPage() {
       const token = localStorage.getItem("accessToken");
       
       const [passportRes, gunRes] = await Promise.all([
-        fetch("http://localhost:8000/api/verification/passport/me", {
+        fetch("https://walletx-production.up.railway.app/api/verification/passport/me", {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch("http://localhost:8000/api/verification/gun/me", {
+        fetch("https://walletx-production.up.railway.app/api/verification/gun/me", {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -109,7 +109,7 @@ export default function VerificationPage() {
       
       const accessToken = localStorage.getItem('accessToken');
       
-      const response = await fetch('http://localhost:8000/api/verification/passport', {
+      const response = await fetch('https://walletx-production.up.railway.app/api/verification/passport', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`
@@ -161,7 +161,7 @@ export default function VerificationPage() {
       
       const accessToken = localStorage.getItem('accessToken');
       
-      const response = await fetch('http://localhost:8000/api/verification/gun', {
+      const response = await fetch('https://walletx-production.up.railway.app/api/verification/gun', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`

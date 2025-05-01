@@ -16,7 +16,8 @@ const app = express();
 const allowedOrigins = [
     process.env.CORS_ORIGIN, 
     "http://localhost:3000",
-    "https://monkfish-adapted-properly.ngrok-free.app"
+    "https://monkfish-adapted-properly.ngrok-free.app",
+    "https://wallet-x-gn6u-git-master-azibmoeens-projects.vercel.app/"
 ];
 
 // Setup CORS with proper origin handling

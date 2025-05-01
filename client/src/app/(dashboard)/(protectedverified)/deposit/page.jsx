@@ -43,7 +43,7 @@ export default function DepositPage() {
   const fetchWalletBalance = async () => {
     try {
       const token = localStorage.getItem("accessToken")
-      const response = await fetch("http://localhost:8000/api/transactions/balance", {
+      const response = await fetch("https://walletx-production.up.railway.app/api/transactions/balance", {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -122,7 +122,7 @@ export default function DepositPage() {
       }
       
       const token = localStorage.getItem("accessToken")
-      const response = await fetch("http://localhost:8000/api/transactions/deposit", {
+      const response = await fetch("https://walletx-production.up.railway.app/api/transactions/deposit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

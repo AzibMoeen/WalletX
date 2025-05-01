@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { API_BASE_URL, getApiUrl } from '@/lib/config';
 
 const useAuthStore = create(
   persist(
@@ -15,7 +14,7 @@ const useAuthStore = create(
       login: async (credentials) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch(getApiUrl('api/auth/login'), {
+          const response = await fetch('https://walletx-production.up.railway.app/api/auth/login', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -53,7 +52,7 @@ const useAuthStore = create(
       register: async (userData) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch(getApiUrl('api/auth/register'), {
+          const response = await fetch('https://walletx-production.up.railway.app/api/auth/register', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -110,7 +109,7 @@ const useAuthStore = create(
         
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch(getApiUrl('api/auth/profile'), {
+          const response = await fetch('https://walletx-production.up.railway.app/api/auth/profile', {
             headers: {
               'Authorization': `Bearer ${token}`,
             },

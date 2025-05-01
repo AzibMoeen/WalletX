@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { getApiUrl } from '@/lib/config';
 
 const useAdminStore = create(
   persist(
@@ -37,7 +36,7 @@ const useAdminStore = create(
           if (page) queryParams.append('page', page);
           
           const token = localStorage.getItem('accessToken');
-          const response = await fetch(`${getApiUrl('api/admin/users')}?${queryParams.toString()}`, {
+          const response = await fetch(`https://walletx-production.up.railway.app/api/admin/users?${queryParams.toString()}`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -69,7 +68,7 @@ const useAdminStore = create(
         set({ isLoading: true, error: null });
         try {
           const token = localStorage.getItem('accessToken');
-          const response = await fetch(getApiUrl(`api/admin/users/${userId}`), {
+          const response = await fetch(`https://walletx-production.up.railway.app/api/admin/users/${userId}`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -100,7 +99,7 @@ const useAdminStore = create(
         set({ isLoading: true, error: null });
         try {
           const token = localStorage.getItem('accessToken');
-          const response = await fetch(getApiUrl(`api/admin/users/${userId}`), {
+          const response = await fetch(`https://walletx-production.up.railway.app/api/admin/users/${userId}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`
@@ -144,7 +143,7 @@ const useAdminStore = create(
           if (page) queryParams.append('page', page);
           
           const token = localStorage.getItem('accessToken');
-          const response = await fetch(`${getApiUrl('api/admin/verifications/passport')}?${queryParams.toString()}`, {
+          const response = await fetch(`https://walletx-production.up.railway.app/api/admin/verifications/passport?${queryParams.toString()}`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -187,7 +186,7 @@ const useAdminStore = create(
           if (page) queryParams.append('page', page);
           
           const token = localStorage.getItem('accessToken');
-          const response = await fetch(`${getApiUrl('api/admin/verifications/gun')}?${queryParams.toString()}`, {
+          const response = await fetch(`https://walletx-production.up.railway.app/api/admin/verifications/gun?${queryParams.toString()}`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -220,7 +219,7 @@ const useAdminStore = create(
         set({ isLoading: true, error: null });
         try {
           const token = localStorage.getItem('accessToken');
-          const response = await fetch(getApiUrl(`api/admin/verifications/passport/${verificationId}`), {
+          const response = await fetch(`https://walletx-production.up.railway.app/api/admin/verifications/passport/${verificationId}`, {
             method: 'PATCH',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -260,7 +259,7 @@ const useAdminStore = create(
         set({ isLoading: true, error: null });
         try {
           const token = localStorage.getItem('accessToken');
-          const response = await fetch(getApiUrl(`api/admin/verifications/gun/${verificationId}`), {
+          const response = await fetch(`https://walletx-production.up.railway.app/api/admin/verifications/gun/${verificationId}`, {
             method: 'PATCH',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -300,7 +299,7 @@ const useAdminStore = create(
         set({ isLoading: true, error: null });
         try {
           const token = localStorage.getItem('accessToken');
-          const response = await fetch(getApiUrl('api/admin/dashboard/stats'), {
+          const response = await fetch(`https://walletx-production.up.railway.app/api/admin/dashboard/stats`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }

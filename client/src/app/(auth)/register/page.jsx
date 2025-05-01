@@ -118,7 +118,7 @@ const Register = () => {
       setEmail(rest.email)
       
       // Send verification email
-      const response = await fetch("http://localhost:8000/api/auth/email-verification", {
+      const response = await fetch("https://walletx-production.up.railway.app/api/auth/email-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(registrationData)
@@ -149,7 +149,7 @@ const Register = () => {
     }
     
     try {
-      const response = await fetch("http://localhost:8000/api/auth/verify-and-register", {
+      const response = await fetch("https://walletx-production.up.railway.app/api/auth/verify-and-register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -178,7 +178,7 @@ const Register = () => {
     setVerificationError("")
     
     try {
-      const response = await fetch("http://localhost:8000/api/auth/email-verification", {
+      const response = await fetch("https://walletx-production.up.railway.app/api/auth/email-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData)

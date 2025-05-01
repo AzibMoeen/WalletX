@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { toast } from 'sonner';
-import { API_BASE_URL, getApiUrl } from '../config.js';
 
 const CURRENCIES = [
   { value: "USD", label: "USD ($)", symbol: "$" },
@@ -15,8 +14,7 @@ const exchangeRates = {
   PKR: { USD: 0.0036, EUR: 0.0033 }
 };
 
-// Using the API URL from configuration
-const API_URL = getApiUrl('api');
+const API_URL =  "https://walletx-production.up.railway.app/api";
 
 const useWalletStore = create(
   persist(
