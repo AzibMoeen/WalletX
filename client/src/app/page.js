@@ -175,24 +175,32 @@ export default function HomePage() {
             >
               {/* Dashboard Preview Mockup */}
               <div className="bg-white rounded-lg shadow-2xl overflow-hidden max-w-4xl mx-auto border border-gray-200">
-                <div className="h-12 bg-gray-50 flex items-center px-4 border-b border-gray-200">
-                  <div className="flex space-x-2">
-                    <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                  </div>
-                </div>
-                <div className="relative aspect-[16/9] bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <Wallet className="w-16 h-16 mx-auto mb-4" />
-                    <h3 className="text-2xl font-bold">WalletX Dashboard Preview</h3>
-                    <p className="text-purple-100">Sign up to experience the full platform</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
+  <div className="h-12 bg-gray-50 flex items-center px-4 border-b border-gray-200">
+    <div className="flex space-x-2">
+      <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+      <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+      <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+    </div>
+  </div>
+  <div className="relative aspect-[16/9] bg-gradient-to-br from-purple-600 to-indigo-600">
+    <Image
+      src="https://colorlib.com/wp/wp-content/uploads/sites/2/free-dashboard-templates-1.jpg.avif" 
+      alt="WalletX Dashboard Preview"
+      fill
+      className="object-cover"
+      priority
+    />
+    
+    {/* Overlay with text and icon */}
+    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+      <div className="text-center text-white">
+        <Wallet className="w-16 h-16 mx-auto mb-4" />
+        <h3 className="text-2xl font-bold">WalletX Dashboard Preview</h3>
+        <p className="text-purple-100">Sign up to experience the full platform</p>
+      </div>
+    </div>
+  </div>
+</div>
       </section>
 
       {/* Features Section */}
