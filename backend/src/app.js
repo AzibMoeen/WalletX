@@ -20,6 +20,7 @@ const allowedOrigins = [
     "https://wallet-x-gn6u-git-master-azibmoeens-projects.vercel.app",
     "https://walletx-production.up.railway.app",
     "https://new-origin.example.com",
+    "https://wallet-x-gn6u-git-master-azibmoeens-projects.vercel.app"
 ];
 
 // Setup CORS with proper origin handling
