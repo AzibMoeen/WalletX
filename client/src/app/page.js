@@ -1,14 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { ArrowRight, Check, Wallet, Shield, Zap, Users, BarChart3, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import useAuthStore from "@/lib/store/useAuthStore"
 
 export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { isAuthenticated, user, fetchUser } = useAuthStore()
+  
+  useEffect(() => {
+    fetchUser()
+  }, [fetchUser])
 
   return (
     <div className="min-h-screen bg-white">
@@ -36,16 +42,26 @@ export default function HomePage() {
               </div>
             </div>
             <div className="hidden md:flex items-center space-x-3">
-              <Link href="/login">
-                <Button variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-50">
-                  Log In
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white">
-                  Sign Up
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <Link href="/wallet">
+                  <Button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white">
+                    Wallet
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login">
+                    <Button variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-50">
+                      Log In
+                    </Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
             <div className="md:hidden">
               <Button
@@ -89,16 +105,26 @@ export default function HomePage() {
                 Testimonials
               </Link>
               <div className="mt-4 space-y-2 px-3">
-                <Link href="/login">
-                  <Button variant="outline" className="w-full border-purple-600 text-purple-600">
-                    Log In
-                  </Button>
-                </Link>
-                <Link href="/register">
-                  <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
-                    Sign Up
-                  </Button>
-                </Link>
+                {isAuthenticated ? (
+                  <Link href="/dashboard">
+                    <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
+                      Dashboard
+                    </Button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/login">
+                      <Button variant="outline" className="w-full border-purple-600 text-purple-600">
+                        Log In
+                      </Button>
+                    </Link>
+                    <Link href="/register">
+                      <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
+                        Sign Up
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
