@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import useWalletStore from '@/lib/store/useWalletStore'
+import { getApiUrl } from '@/lib/config'
 
 const CURRENCIES = [
   { value: "USD", label: "USD ($)", symbol: "$" },
@@ -43,7 +44,7 @@ export const useWallet = () => {
     try {
       setIsLoading(true)
       const token = localStorage.getItem("accessToken")
-      const response = await fetch("http://localhost:8000/api/transactions/balance", {
+      const response = await fetch(getApiUrl("api/transactions/balance"), {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -68,7 +69,7 @@ export const useWallet = () => {
   const fetchUserData = useCallback(async () => {
     try {
       const token = localStorage.getItem("accessToken")
-      const response = await fetch("http://localhost:8000/api/auth/profile", {
+      const response = await fetch(getApiUrl("api/auth/profile"), {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -93,7 +94,7 @@ export const useWallet = () => {
       const token = localStorage.getItem("accessToken")
       
       // First check if user is verified
-      const userResponse = await fetch("http://localhost:8000/api/auth/profile", {
+      const userResponse = await fetch(getApiUrl("api/auth/profile"), {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -116,11 +117,11 @@ export const useWallet = () => {
       
       // Fetch both passport and gun license verification requests
       const [passportRes, gunRes] = await Promise.all([
-        fetch("http://localhost:8000/api/verification/passport/me", {
+        fetch(getApiUrl("api/verification/passport/me"), {
           headers: { Authorization: `Bearer ${token}` }
         }).catch(() => ({ ok: false })),
         
-        fetch("http://localhost:8000/api/verification/gun/me", {
+        fetch(getApiUrl("api/verification/gun/me"), {
           headers: { Authorization: `Bearer ${token}` }
         }).catch(() => ({ ok: false }))
       ])
@@ -156,7 +157,7 @@ export const useWallet = () => {
   const fetchUsers = useCallback(async () => {
     try {
       const token = localStorage.getItem("accessToken")
-      const response = await fetch("http://localhost:8000/api/transactions/users/transfer", {
+      const response = await fetch(getApiUrl("api/transactions/users/transfer"), {
         headers: {
           Authorization: `Bearer ${token}`
         }

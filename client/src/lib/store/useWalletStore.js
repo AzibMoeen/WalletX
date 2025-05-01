@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { toast } from 'sonner';
-import { getApiUrl } from '@/lib/config';
+import { API_BASE_URL, getApiUrl } from '../config.js';
 
 const CURRENCIES = [
   { value: "USD", label: "USD ($)", symbol: "$" },
