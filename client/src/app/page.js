@@ -375,7 +375,7 @@ export default function HomePage() {
                 ))}
               </div>
               <p className="text-gray-600">
-                "WalletX has revolutionized how I receive payments from clients worldwide. It's fast, secure, and the fees are much lower than traditional methods."
+                &quot;WalletX has revolutionized how I receive payments from clients worldwide. It&apos;s fast, secure, and the fees are much lower than traditional methods.&quot;
               </p>
             </div>
 
@@ -397,7 +397,7 @@ export default function HomePage() {
                 ))}
               </div>
               <p className="text-gray-600">
-                "The payment request feature is a game-changer for my business. I can track who has paid and send automated reminders. Customer support is also excellent."
+                &quot;The payment request feature is a game-changer for my business. I can track who has paid and send automated reminders. Customer support is also excellent.&quot;
               </p>
             </div>
 
@@ -419,7 +419,7 @@ export default function HomePage() {
                 ))}
               </div>
               <p className="text-gray-600">
-                "Splitting bills and expenses with roommates has never been easier. The app interface is intuitive and the instant transfers make sharing costs so convenient."
+                &quot;Splitting bills and expenses with roommates has never been easier. The app interface is intuitive and the instant transfers make sharing costs so convenient.&quot;
               </p>
             </div>
           </div>
