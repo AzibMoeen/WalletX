@@ -184,7 +184,7 @@ export default function HomePage() {
   </div>
   <div className="relative aspect-[16/9] bg-gradient-to-br from-purple-600 to-indigo-600">
     <Image
-      src="https://colorlib.com/wp/wp-content/uploads/sites/2/free-dashboard-templates-1.jpg.avif" 
+      src="/image.png" 
       alt="WalletX Dashboard Preview"
       fill
       className="object-cover"
