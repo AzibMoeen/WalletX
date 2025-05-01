@@ -15,19 +15,17 @@ const ReceiveMoneyCard = ({ wallet, user }) => {
     })
   }
 
-  // Handle share functionality if supported by browser
   const handleShare = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: 'My WalletX ID',
+        await navigator.share({    title: 'My WalletX ID',
+      
           text: `Here's my WalletX ID: ${wallet.walletId}`,
         });
       } catch (error) {
         console.log('Error sharing:', error);
       }
     } else {
-      // Fallback to clipboard if sharing is not supported
       copyToClipboard(wallet.walletId, 'wallet');
     }
   };

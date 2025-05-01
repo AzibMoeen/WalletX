@@ -1,10 +1,18 @@
 import express from "express";
-import { Register, Login, Logout, GetProfile } from "../controllers/userAuth.controllers.js";
+import { Register, Login, Logout, GetProfile, SendVerificationEmail, VerifyAndRegister, ForgotPassword, ResetPassword } from "../controllers/userAuth.controllers.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 
-import { upload } from "../middleware/multer.middleware.js";
+
 
 const router = express.Router();
+
+// Email verification routes
+router.post("/email-verification", SendVerificationEmail);
+router.post("/verify-and-register", VerifyAndRegister);
+
+// Password reset routes
+router.post("/forgot-password", ForgotPassword);
+router.post("/reset-password", ResetPassword);
 
 // Authentication routes
 router.post("/register", Register);

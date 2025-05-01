@@ -505,7 +505,6 @@ export async function getUserPassportVerifications(req, res) {
     }
 }
 
-// Get user's gun verification requests
 export async function getUserGunVerifications(req, res) {
     try {
         const userId = req.user._id;
@@ -519,7 +518,6 @@ export async function getUserGunVerifications(req, res) {
     }
 }
 
-// Delete a passport verification
 export async function deletePassportVerification(req, res) {
     try {
         const { id } = req.params;
@@ -535,7 +533,6 @@ export async function deletePassportVerification(req, res) {
     }
 }
 
-// Delete a gun verification
 export async function deleteGunVerification(req, res) {
     try {
         const { id } = req.params;

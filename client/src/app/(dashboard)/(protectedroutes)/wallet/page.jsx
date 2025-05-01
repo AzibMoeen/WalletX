@@ -1,195 +1,62 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import BalanceCard from "./components/BalanceCard"
 import RecentRecipients from "./components/RecentRecipients"
 import SendMoneyForm from "./components/SendMoneyForm"
 import ReceiveMoneyCard from "./components/ReceiveMoneyCard"
-
-const CURRENCIES = [
-  { value: "USD", label: "USD ($)", symbol: "$" },
-  { value: "EUR", label: "EUR (€)", symbol: "€" },
-  { value: "PKR", label: "PKR (₨)", symbol: "₨" }
-]
+import useWalletStore from "@/lib/store/useWalletStore"
 
 export default function WalletPage() {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [error, setError] = useState("")
-  const [wallet, setWallet] = useState({ balances: [], walletId: "" })
-  const [user, setUser] = useState({ email: "" })
-  const [users, setUsers] = useState([])
-  const [isUsersFetched, setIsUsersFetched] = useState(false)
   
-  const [formData, setFormData] = useState({
-    recipientId: "",
-    recipientEmail: "",
-    amount: "",
-    currency: "USD",
-    note: ""
-  })
-  const [verificationStatus, setVerificationStatus] = useState({
-    isVerified: false,
-    pendingRequests: [],
-    loading: true
-  })
-
+  const {
+    wallet,
+    userProfile,
+    users,
+    formData,
+    isLoading,
+    success,
+    error,
+    verificationStatus,
+    isUsersFetched,
+    
+    setFormData,
+    resetForm,
+    setSuccess,
+    
+    transferFunds,
+    fetchUsers,
+    initializeWallet,
+    
+    getBalanceDisplay,
+    getCurrencySymbol
+  } = useWalletStore()
+  
   useEffect(() => {
-    fetchWalletBalance()
-    fetchUserData()
-    fetchVerificationStatus()
-  }, [])
+    initializeWallet()
+  }, [initializeWallet])
 
-  const fetchWalletBalance = async () => {
-    try {
-      const token = localStorage.getItem("accessToken")
-      const response = await fetch("http://localhost:8000/api/transactions/balance", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch wallet balance")
-      }
-      
-      const data = await response.json()
-      setWallet(data.wallet)
-    } catch (error) {
-      console.error("Error fetching wallet balance:", error)
-    }
-  }
-  
-  const fetchUserData = async () => {
-    try {
-      const token = localStorage.getItem("accessToken")
-      const response = await fetch("http://localhost:8000/api/auth/profile", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch user data")
-      }
-      
-      const data = await response.json()
-      setUser(data.user)
-    } catch (error) {
-      console.error("Error fetching user data:", error)
-    }
-  }
-
-  const fetchVerificationStatus = async () => {
-    try {
-      const token = localStorage.getItem("accessToken")
-      
-      // First check if user is verified
-      const userResponse = await fetch("http://localhost:8000/api/auth/profile", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-      
-      if (!userResponse.ok) {
-        throw new Error("Failed to fetch user data")
-      }
-      
-      const userData = await userResponse.json()
-      console.log(userData)
-      
-      // If user is already verified, no need to fetch verification requests
-      if (userData.user && userData.user.verified === true) {
-        setVerificationStatus({
-          isVerified: true,
-          pendingRequests: [],
-          loading: false
-        })
-        return
-      }
-      
-      // Fetch both passport and gun license verification requests
-      const [passportRes, gunRes] = await Promise.all([
-        fetch("http://localhost:8000/api/verification/passport/me", {
-          headers: { Authorization: `Bearer ${token}` }
-        }).catch(() => ({ ok: false })),
-        
-        fetch("http://localhost:8000/api/verification/gun/me", {
-          headers: { Authorization: `Bearer ${token}` }
-        }).catch(() => ({ ok: false }))
-      ])
-      
-      const pendingRequests = []
-      
-      if (passportRes.ok) {
-        const passportData = await passportRes.json()
-        if (passportData && passportData.verifications) {
-          pendingRequests.push(...passportData.verifications.map(v => ({...v, type: 'passport'})))
-        }
-      }
-      
-      if (gunRes.ok) {
-        const gunData = await gunRes.json()
-        if (gunData && gunData.verifications) {
-          pendingRequests.push(...gunData.verifications.map(v => ({...v, type: 'gun'})))
-        }
-      }
-      
-      setVerificationStatus({
-        isVerified: false,
-        pendingRequests,
-        loading: false
-      })
-    } catch (error) {
-      console.error("Error fetching verification status:", error)
-      setVerificationStatus(prev => ({...prev, loading: false}))
-    }
-  }
-
-  // Fetch all users for transfer
-  const fetchUsers = async () => {
-    try {
-      const token = localStorage.getItem("accessToken")
-      const response = await fetch("http://localhost:8000/api/transactions/users/transfer", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch users")
-      }
-      
-      const data = await response.json()
-      setUsers(data.users)
-      setIsUsersFetched(true)
-    } catch (error) {
-      console.error("Error fetching users:", error)
-    }
-  }
-
+  // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    setFormData({ [name]: value })
   }
 
   const handleSelectChange = (name, value) => {
-    setFormData(prev => ({ ...prev, [name]: value }))
+    setFormData({ [name]: value })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setIsLoading(true)
-    setError("")
     setSuccess(false)
     
     try {
       // Validate form
-      if (!formData.recipientId) {
-        throw new Error("Please enter a recipient wallet ID")
+      if (!formData.recipientId && !formData.recipientEmail) {
+        throw new Error("Please select a recipient")
       }
       
       if (!formData.amount || parseFloat(formData.amount) <= 0) {
@@ -202,64 +69,25 @@ export default function WalletPage() {
         throw new Error("Insufficient funds")
       }
       
-      const token = localStorage.getItem("accessToken")
-      const response = await fetch("http://localhost:8000/api/transactions/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          recipientId: formData.recipientId,
-          amount: parseFloat(formData.amount),
-          currency: formData.currency,
-          notes: formData.note || "Transfer"
-        })
+      // Send money using Zustand action
+      await transferFunds({
+        recipientId: formData.recipientId,
+        recipientEmail: formData.recipientEmail,
+        amount: parseFloat(formData.amount),
+        currency: formData.currency,
+        notes: formData.note || "Transfer"
       })
       
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Failed to send money")
-      }
+      // Reset form data
+      resetForm()
       
-      // Update wallet balance
-      await fetchWalletBalance()
-      
-      setSuccess(true)
-      // Reset form
-      setFormData({
-        recipientId: "",
-        recipientEmail: "",
-        amount: "",
-        currency: "USD",
-        note: ""
-      })
-      
-      // Redirect to wallet page after 2 seconds
+      // Redirect to wallet page after success
       setTimeout(() => {
         router.push("/wallet")
       }, 2000)
-      
     } catch (error) {
-      setError(error.message)
-    } finally {
-      setIsLoading(false)
+      console.error("Send money error:", error)
     }
-  }
-
-  // Helper to format balance display
-  const getBalanceDisplay = (currency) => {
-    const balance = wallet.balances?.find(b => b.currency === currency)
-    const currencyObj = CURRENCIES.find(c => c.value === currency)
-    if (balance && currencyObj) {
-      return `${currencyObj.symbol}${balance.amount.toFixed(2)}`
-    }
-    return `${currency} 0.00`
-  }
-
-  // Get currency symbol
-  const getCurrencySymbol = (currency) => {
-    return CURRENCIES.find(c => c.value === currency)?.symbol || ""
   }
 
   return (
@@ -278,7 +106,6 @@ export default function WalletPage() {
               <BalanceCard 
                 wallet={wallet} 
                 getBalanceDisplay={getBalanceDisplay} 
-                router={router} 
                 buttonAction="deposit"
               />
               
@@ -299,7 +126,7 @@ export default function WalletPage() {
                 users={users}
                 isUsersFetched={isUsersFetched}
                 fetchUsers={fetchUsers}
-                user={user}
+                user={userProfile}
                 verificationStatus={verificationStatus}
               />
             </div>
@@ -313,14 +140,13 @@ export default function WalletPage() {
               <BalanceCard 
                 wallet={wallet} 
                 getBalanceDisplay={getBalanceDisplay} 
-                router={router} 
                 buttonAction="transactions"
               />
             </div>
             
             {/* Receive Money */}
             <div className="md:col-span-8">
-              <ReceiveMoneyCard wallet={wallet} user={user} />
+              <ReceiveMoneyCard wallet={wallet} user={userProfile} />
             </div>
           </div>
         </TabsContent>

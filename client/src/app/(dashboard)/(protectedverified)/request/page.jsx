@@ -3,14 +3,18 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import useWalletStore from "@/lib/store/useWalletStore"
 import NewRequestForm from "./components/NewRequestForm"
 import ReceivedRequestsCard from "./components/ReceivedRequestsCard"
 import SentRequestsCard from "./components/SentRequestsCard"
+import axios from "axios"
+import useAuthStore from "@/lib/store/useAuthStore"
 
 export default function RequestPage() {
   const router = useRouter()
-  const { requestMoney, fetchMoneyRequests, requests, isLoading, error, clearError } = useWalletStore()
+  const { isAuthenticated, user, accessToken, fetchUser } = useAuthStore()
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [requests, setRequests] = useState([])
   
   const [formData, setFormData] = useState({
     targetEmail: "",
@@ -24,36 +28,140 @@ export default function RequestPage() {
   const [receivedRequests, setReceivedRequests] = useState([])
   const [sentRequests, setSentRequests] = useState([])
   
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+  
+  // Ensure user is authenticated first
   useEffect(() => {
-    fetchMoneyRequests()
-  }, [fetchMoneyRequests])
+    if (!isAuthenticated || !user) {
+      fetchUser()
+    }
+  }, [isAuthenticated, user, fetchUser])
+  
+  // Fetch all money requests
+  const fetchMoneyRequests = async () => {
+    try {
+      setIsLoading(true)
+      
+      // Use the token from auth store
+      const token = accessToken
+      
+      const response = await axios.get(`${API_URL}/transactions/requests`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      
+      if (response.data && response.data.requests) {
+        setRequests(response.data.requests)
+      }
+      setError(null)
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to fetch money requests")
+      console.error("Error fetching money requests:", err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+  
+  // Request money function
+  const requestMoney = async (requestData) => {
+    try {
+      setIsLoading(true)
+      // Use the token from auth store
+      const token = accessToken
+      
+      const response = await axios.post(`${API_URL}/transactions/request`, requestData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      })
+      
+      setSuccess(true)
+      // Refresh the requests list
+      fetchMoneyRequests()
+      setError(null)
+      return response.data
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to send money request")
+      console.error("Error requesting money:", err)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+  
+  // Pay money request function
+  const payMoneyRequest = async (requestId) => {
+    try {
+      setIsLoading(true)
+      // Use the token from auth store
+      const token = accessToken
+      
+      console.log("Paying request ID:", requestId); 
+      const payload = { requestId };
+      console.log("Request payload:", payload);
+      
+      const response = await axios({
+        method: 'post',
+        url: `${API_URL}/transactions/pay-request`,
+        data: payload,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+      
+      // Refresh the requests list
+      fetchMoneyRequests()
+      setError(null)
+      return response.data
+    } catch (err) {
+      console.error("Error paying money request:", err)
+      const errorMessage = err.response?.data?.message || "Failed to pay money request"
+      setError(errorMessage)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+  
+  // Clear error state
+  const clearError = () => {
+    setError(null)
+  }
+  
+  // Fetch requests when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchMoneyRequests()
+    }
+  }, [isAuthenticated, user])
   
   // Update requests list when requests state changes
   useEffect(() => {
-    if (requests && requests.length > 0) {
-      // Get user ID from localStorage
-      const user = localStorage.getItem("user")
-      const userId = user ? JSON.parse(user)._id : localStorage.getItem("userId")
-     
+    if (requests && requests.length > 0 && user) {
+      const userId = user._id
+      
       // Filter requests properly - handle string comparison correctly
       const received = requests.filter(req => 
         req.recipient && 
-        (req.recipient._id === userId || req.recipient._id.toString() === userId)
-      );
+        (req.recipient._id === userId || String(req.recipient._id) === userId)
+      )
       
       const sent = requests.filter(req => 
         req.user && 
-        (req.user._id === userId || req.user._id.toString() === userId)
-      );
+        (req.user._id === userId || String(req.user._id) === userId)
+      )
       
-      setReceivedRequests(received);
-      setSentRequests(sent);
+      setReceivedRequests(received)
+      setSentRequests(sent)
     } else {
       // Reset arrays when no requests are available
-      setReceivedRequests([]);
-      setSentRequests([]);
+      setReceivedRequests([])
+      setSentRequests([])
     }
-  }, [requests])
+  }, [requests, user])
   
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -103,7 +211,7 @@ export default function RequestPage() {
       }, 1500)
       
     } catch (err) {
-      // Error will be handled by the store
+      setError(err.message || "An error occurred while sending the request")
       console.error(err)
     }
   }
@@ -127,13 +235,14 @@ export default function RequestPage() {
   // Handle paying a money request
   const handlePayRequest = async (requestId) => {
     try {
-      await useWalletStore.getState().payMoneyRequest(requestId)
-      // Money requests will be refreshed automatically via the store
+      await payMoneyRequest(requestId)
+      // After successful payment, fetch updated requests
+      fetchMoneyRequests()
     } catch (err) {
       console.error(err)
     }
   }
-  
+
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-2xl font-bold mb-6">Money Requests</h1>

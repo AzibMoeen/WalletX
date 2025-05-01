@@ -16,46 +16,24 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Button } from "./button"
+import useAuthStore from "@/lib/store/useAuthStore"
+import { useRouter } from "next/navigation"
 
 export default function AdminSideBar({ children }) {
+  const router = useRouter()
   const pathname = usePathname()
 
+  const { logout } = useAuthStore()
   const handleLogout = async () => {
     try {
-      // Get the token before removing it from localStorage
-      const token = localStorage.getItem("accessToken");
-      
-      // Make the API request to logout
-      const response = await fetch("http://localhost:8000/api/auth/logout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
-      });
-      
-      // Check if the request was successful
-      if (response.ok) {
-        console.log("Logged out successfully");
-      } else {
-        console.error("Logout failed:", await response.text());
-      }
-      
-      // Clear local storage regardless of API response
-      localStorage.removeItem("user");
-      localStorage.removeItem("accessToken");
-      
-      // Redirect to login page
-      window.location.href = "/login";
+      await logout()
+      router.push('/login') // Redirect to login page after logout
     } catch (error) {
-      console.error("Error during logout:", error);
-      
-      // Still clear local storage and redirect even if API call fails
-      localStorage.removeItem("user");
-      localStorage.removeItem("accessToken");
-      window.location.href = "/login";
+      console.error("Logout failed:", error)
+      // Handle error (e.g., show a notification) 
     }
-  };
+  }
+
 
   const adminMenuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },

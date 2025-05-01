@@ -1,74 +1,91 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Loader2 } from "lucide-react"
+import { useState } from "react"
 
-const ReceivedRequestsCard = ({ 
-  receivedRequests, 
-  formatDate, 
-  getCurrencySymbol, 
-  handlePayRequest 
-}) => {
+export default function ReceivedRequestsCard({
+  receivedRequests,
+  formatDate,
+  getCurrencySymbol,
+  handlePayRequest
+}) {
+  const [payingRequestId, setPayingRequestId] = useState(null)
+  
+  const onPayRequest = async (requestId) => {
+    try {
+      setPayingRequestId(requestId)
+      await handlePayRequest(requestId)
+    } finally {
+      setPayingRequestId(null)
+    }
+  }
+  
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle>Money Requests Received</CardTitle>
-        <CardDescription>
-          Manage money requests you've received from other users
-        </CardDescription>
+        <CardTitle>Requests Received</CardTitle>
       </CardHeader>
       <CardContent>
-        {receivedRequests.length === 0 ? (
-          <p className="text-center py-10 text-gray-500">
-            No money requests received
-          </p>
-        ) : (
+        {receivedRequests && receivedRequests.length > 0 ? (
           <div className="space-y-4">
             {receivedRequests.map((request) => (
-              <Card key={request._id} className={`border ${request.status === 'pending' ? 'border-blue-200' : 'border-green-200'}`}>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-semibold">
-                        Request from: {request.user?.fullname || request.user?.email}
-                      </h3>
-                      <p className="text-sm text-gray-500">{formatDate(request.createdAt)}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold">
-                        {getCurrencySymbol(request.currencyFrom)} {request.amount.toFixed(2)}
-                      </p>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        request.status === 'pending' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
-                      }`}>
-                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                      </span>
-                    </div>
+              <Card key={request._id} className="p-4 border shadow-sm">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-medium">
+                      From: {request.user?.fullname || request.user?.email || 'Unknown user'}
+                    </p>
+                    <p className="text-sm text-gray-500">{formatDate(request.createdAt)}</p>
+                  </div>
+                <div 
+                    className={
+                      request.status === 'completed' 
+                        ? 'bg-green-100 text-green-800' 
+                        : request.status === 'pending' 
+                        ? 'bg-yellow-100 text-yellow-800' 
+                        : 'bg-red-100 text-red-800'
+                    }
+                  >
+                    {request.status === 'completed' ? 'Paid' : request.status === 'pending' ? 'Pending' : 'Rejected'}
+                  </div>
+                </div>
+                
+                <div className="mt-4 flex justify-between items-center">
+                  <div>
+                    <p className="text-lg font-bold">
+                      {getCurrencySymbol(request.currencyFrom)}{request.amount.toFixed(2)} {request.currencyFrom}
+                    </p>
+                    {request.notes && (
+                      <p className="text-sm text-gray-600 mt-1">{request.notes}</p>
+                    )}
                   </div>
                   
-                  {request.notes && (
-                    <p className="text-sm mb-4 bg-gray-50 p-3 rounded">
-                      "{request.notes}"
-                    </p>
-                  )}
-                  
                   {request.status === 'pending' && (
-                    <div className="flex justify-end mt-2">
-                      <Button 
-                        onClick={() => handlePayRequest(request._id)}
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        Pay Now
-                      </Button>
-                    </div>
+                    <Button 
+                      onClick={() => onPayRequest(request._id)}
+                      disabled={payingRequestId === request._id}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {payingRequestId === request._id ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Paying...
+                        </>
+                      ) : (
+                        "Pay Now"
+                      )}
+                    </Button>
                   )}
-                </CardContent>
+                </div>
               </Card>
             ))}
+          </div>
+        ) : (
+          <div className="text-center py-10 text-gray-500">
+            <p>You have no money requests from others</p>
           </div>
         )}
       </CardContent>
     </Card>
   )
 }
-
-export default ReceivedRequestsCard

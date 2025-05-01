@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { Transaction } from "../models/transaction.model.js";
 import { Wallet } from "../models/wallet.model.js";
 import { User } from "../models/user.model.js";
+import { sendNotification } from '../../utils/emailService.js';
 
 // Helper function to get or create a wallet for a user
 const getOrCreateWallet = async (userId) => {
@@ -375,7 +376,6 @@ export const requestMoney = async (req, res) => {
     
     let targetUser;
     
-    // Find target user either by ID or email
     if (targetUserId) {
       targetUser = await User.findById(targetUserId);
     } else if (targetEmail) {
@@ -392,17 +392,28 @@ export const requestMoney = async (req, res) => {
       return res.status(400).json({ message: "Cannot request money from yourself" });
     }
     
-    // Create money request transaction
-    const transaction = await Transaction.create({
-      user: requesterId,
-      recipient: targetUser._id,
-      type: 'request',
-      amount,
-      currencyFrom: currency,
-      notes,
-      status: 'pending'
+    // Send notification to the target user
+    const email = await sendNotification({
+      userId: targetUser._id,
+      subject: "Money Request",
+      message: `You have received a money request of ${amount} ${currency} from ${req.user.fullname}.`,
+      html: `<p>You have received a money request of <strong>${amount} ${currency}</strong> from <strong>${req.user.fullname}</strong>.</p>`
     });
+    console.log("Email notification sent:", email);
     
+    let transaction = null;
+    if (true) { // Always create the transaction regardless of email status
+      transaction = await Transaction.create({
+        user: requesterId,
+        recipient: targetUser._id,
+        type: 'request',
+        amount,
+        currencyFrom: currency,
+        notes,
+        status: 'pending'
+      });
+    }
+
     return res.status(201).json({
       message: "Money request sent successfully",
       transaction
@@ -413,13 +424,19 @@ export const requestMoney = async (req, res) => {
   }
 };
 
-// Pay a money request
 export const payRequest = async (req, res) => {
   try {
+    console.log("Pay request received with body:", JSON.stringify(req.body));
     const { requestId } = req.body;
     const payerId = req.user._id;
     
-    // Find the request transaction
+    console.log(`Processing payment - Request ID: ${requestId}, Payer ID: ${payerId}`);
+    
+    if (!requestId) {
+      console.log("Request ID is missing in the request body");
+      return res.status(400).json({ message: "Request ID is required" });
+    }
+    
     const requestTransaction = await Transaction.findOne({
       _id: requestId,
       status: 'pending',
@@ -427,11 +444,15 @@ export const payRequest = async (req, res) => {
     }).populate('user', 'fullname email');
     
     if (!requestTransaction) {
+      console.log(`No pending request found with ID: ${requestId}`);
       return res.status(404).json({ message: "Money request not found or already processed" });
     }
     
+    console.log(`Found request transaction: ${requestTransaction._id}`);
+    
     // Check if this user is the recipient of the request
     if (requestTransaction.recipient.toString() !== payerId.toString()) {
+      console.log(`Authorization failed - User ${payerId} is not the recipient of request ${requestId}`);
       return res.status(403).json({ message: "You are not authorized to pay this request" });
     }
     
@@ -443,8 +464,11 @@ export const payRequest = async (req, res) => {
     const balance = payerWallet?.balances.find(b => b.currency === currency)?.amount || 0;
     
     if (balance < amount) {
+      console.log(`Insufficient funds - User has ${balance} ${currency}, needs ${amount} ${currency}`);
       return res.status(400).json({ message: "Insufficient funds" });
     }
+    
+    console.log(`Payment validated - Updating transaction status`);
     
     // Update request transaction status
     requestTransaction.status = 'completed';
@@ -457,24 +481,32 @@ export const payRequest = async (req, res) => {
       type: 'payment',
       amount,
       currencyFrom: currency,
-      notes: `Payment for request: ${requestTransaction.reference}`,
+      notes: `Payment for request: ${requestTransaction.reference || requestTransaction._id}`,
       status: 'completed'
     });
     
-    // Create receive transaction for requester
     const receiveTransaction = await Transaction.create({
       user: requestTransaction.user._id,
       sender: payerId,
       type: 'receive',
       amount,
       currencyFrom: currency,
-      notes: `Received payment for request: ${requestTransaction.reference}`,
+      notes: `Received payment for request: ${requestTransaction.reference || requestTransaction._id}`,
       status: 'completed'
+    });
+
+    const email = await sendNotification({
+      userId: requestTransaction.user._id,
+      subject: "Payment Received",
+      message: `Your money request for ${amount} ${currency} has been paid.`,
+      html: `<p>Your money request for <strong>${amount} ${currency}</strong> has been paid by <strong>${req.user.fullname}</strong>.</p>`
     });
     
     // Update wallet balances
     await updateWalletBalance(payerId, currency, -amount);
     await updateWalletBalance(requestTransaction.user._id, currency, amount);
+    
+    console.log(`Payment completed successfully - Transaction ID: ${paymentTransaction._id}`);
     
     return res.status(200).json({
       message: "Money request paid successfully",
@@ -496,12 +528,10 @@ export const getMoneyRequests = async (req, res) => {
     let query = {};
     
     if (type === 'sent') {
-      console.log("Fetching sent requests for user:", userId);
       query = { user: userId, type: 'request' };
     } else if (type === 'received') {
       query = { recipient: userId, type: 'request' };
     } else {
-      console.log("Fetching all requests for user alll:", userId);
       query = {
         $or: [
           { user: userId, type: 'request' }, 
@@ -510,13 +540,11 @@ export const getMoneyRequests = async (req, res) => {
       };
     }
     
-    
     if (status) {
       query.status = status;
     }
     
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
     
     const requests = await Transaction.find(query)
       .sort({ createdAt: -1 })
@@ -525,12 +553,9 @@ export const getMoneyRequests = async (req, res) => {
       .populate('user', 'fullname email')
       .populate('recipient', 'fullname email')
       .lean();
-      console.log("Fetched requests:", requests);
-    
     
     const total = await Transaction.countDocuments(query);
     
- 
     const processedRequests = requests.map(request => ({
       ...request,
       user: request.user || { _id: null, fullname: 'Unknown User', email: 'unknown@example.com' },
@@ -580,11 +605,11 @@ export const getFilteredTransactionHistory = async (req, res) => {
         case 'weekly':
           const day = now.getDay();
           startDate = new Date(now);
-          startDate.setDate(now.getDate() - day); 
+          startDate.setDate(now.getDate() - day);
           startDate.setHours(0, 0, 0, 0);
           break;
         case 'monthly':
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
           break;
         default:
           startDate = null;

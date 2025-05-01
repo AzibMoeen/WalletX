@@ -1,22 +1,73 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { toast } from 'sonner';
+
+const CURRENCIES = [
+  { value: "USD", label: "USD ($)", symbol: "$" },
+  { value: "EUR", label: "EUR (€)", symbol: "€" },
+  { value: "PKR", label: "PKR (₨)", symbol: "₨" }
+];
+
+const exchangeRates = {
+  USD: { EUR: 0.91, PKR: 278.5 },
+  EUR: { USD: 1.09, PKR: 305.65 },
+  PKR: { USD: 0.0036, EUR: 0.0033 }
+};
+
+const API_URL =  "http://localhost:8000/api";
 
 const useWalletStore = create(
   persist(
     (set, get) => ({
-      balance: 0,
+      // State
+      wallet: { balances: [], walletId: "" },
       transactions: [],
+      recentRecipients: [],
       requests: [],
+      users: [],
+      userProfile: { email: "", fullname: "", verified: false },
+      isUsersFetched: false,
+      verificationStatus: {
+        isVerified: false,
+        pendingRequests: [],
+        loading: true
+      },
+      formData: {
+        recipientId: "",
+        recipientEmail: "",
+        amount: "",
+        currency: "USD",
+        note: ""
+      },
       isLoading: false,
       error: null,
+      success: false,
+      stats: null,
+      
+      setFormData: (data) => set((state) => ({
+        formData: { ...state.formData, ...data }
+      })),
+
+      resetForm: () => set({
+        formData: {
+          recipientId: "",
+          recipientEmail: "",
+          amount: "",
+          currency: "USD",
+          note: ""
+        },
+        success: false
+      }),
+
+      setSuccess: (value) => set({ success: value }),
       
       fetchBalance: async () => {
         const token = localStorage.getItem('accessToken');
-        if (!token) return;
+        if (!token) return null;
         
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch('http://localhost:8000/api/transactions/balance', {
+          const response = await fetch(`${API_URL}/transactions/balance`, {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
@@ -29,7 +80,7 @@ const useWalletStore = create(
           }
           
           set({
-            balance: data.wallet,
+            wallet: data.wallet,
             isLoading: false,
           });
           
@@ -39,18 +90,19 @@ const useWalletStore = create(
             isLoading: false, 
             error: error.message 
           });
+          return null;
         }
       },
 
       fetchTransactions: async (period = null) => {
         const token = localStorage.getItem('accessToken');
-        if (!token) return;
+        if (!token) return null;
         
         set({ isLoading: true, error: null });
         try {
           const url = period 
-            ? `http://localhost:8000/api/transactions/filtered-history?period=${period}`
-            : 'http://localhost:8000/api/transactions/history';
+            ? `${API_URL}/transactions/filtered-history?period=${period}`
+            : `${API_URL}/transactions/history`;
             
           const response = await fetch(url, {
             headers: {
@@ -64,8 +116,17 @@ const useWalletStore = create(
             throw new Error(data.message || 'Failed to fetch transactions');
           }
           
+          const recipients = data.transactions
+            .filter(t => t.type === 'send' && t.recipient)
+            .map(t => t.recipient)
+            .filter((recipient, index, self) => 
+              index === self.findIndex((r) => r._id === recipient._id)
+            )
+            .slice(0, 5);
+          
           set({
             transactions: data.transactions,
+            recentRecipients: recipients,
             stats: data.stats || null,
             isLoading: false,
           });
@@ -76,16 +137,17 @@ const useWalletStore = create(
             isLoading: false, 
             error: error.message 
           });
+          return null;
         }
       },
       
       transferFunds: async (transferData) => {
         const token = localStorage.getItem('accessToken');
-        if (!token) return;
+        if (!token) return null;
         
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch('http://localhost:8000/api/transactions/send', {
+          const response = await fetch(`${API_URL}/transactions/send`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -100,28 +162,31 @@ const useWalletStore = create(
             throw new Error(data.message || 'Transfer failed');
           }
           
+          // Update balance and transactions after successful transfer
           get().fetchBalance();
           get().fetchTransactions();
           
-          set({ isLoading: false });
+          set({ isLoading: false, success: true });
+          toast.success("Money sent successfully");
           return data;
         } catch (error) {
           set({ 
             isLoading: false, 
-            error: error.message 
+            error: error.message,
+            success: false
           });
+          toast.error(error.message || "Failed to send money");
           throw error;
         }
       },
       
-      // Deposit funds
       depositFunds: async (depositData) => {
         const token = localStorage.getItem('accessToken');
-        if (!token) return;
+        if (!token) return null;
         
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch('http://localhost:8000/api/transactions/deposit', {
+          const response = await fetch(`${API_URL}/transactions/deposit`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -140,25 +205,27 @@ const useWalletStore = create(
           get().fetchBalance();
           get().fetchTransactions();
           
-          set({ isLoading: false });
+          set({ isLoading: false, success: true });
+          toast.success("Funds deposited successfully");
           return data;
         } catch (error) {
           set({ 
             isLoading: false, 
-            error: error.message 
+            error: error.message,
+            success: false
           });
+          toast.error(error.message || "Failed to deposit funds");
           throw error;
         }
       },
       
-      // Request money from user
       requestMoney: async (requestData) => {
         const token = localStorage.getItem('accessToken');
-        if (!token) return;
+        if (!token) return null;
         
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch('http://localhost:8000/api/transactions/request', {
+          const response = await fetch(`${API_URL}/transactions/request`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -173,27 +240,29 @@ const useWalletStore = create(
             throw new Error(data.message || 'Money request failed');
           }
           
-          // Update requests list
           get().fetchMoneyRequests();
           
-          set({ isLoading: false });
+          set({ isLoading: false, success: true });
+          toast.success("Money request sent successfully");
           return data;
         } catch (error) {
           set({ 
             isLoading: false, 
-            error: error.message 
+            error: error.message,
+            success: false
           });
+          toast.error(error.message || "Failed to send money request");
           throw error;
         }
       },
       
       payMoneyRequest: async (requestId) => {
         const token = localStorage.getItem('accessToken');
-        if (!token) return;
+        if (!token) return null;
         
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch('http://localhost:8000/api/transactions/pay-request', {
+          const response = await fetch(`${API_URL}/transactions/pay-request`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -212,27 +281,29 @@ const useWalletStore = create(
           get().fetchTransactions();
           get().fetchMoneyRequests();
           
-          set({ isLoading: false });
+          set({ isLoading: false, success: true });
+          toast.success("Request paid successfully");
           return data;
         } catch (error) {
           set({ 
             isLoading: false, 
-            error: error.message 
+            error: error.message,
+            success: false
           });
+          toast.error(error.message || "Failed to pay request");
           throw error;
         }
       },
       
-      // Fetch money requests
       fetchMoneyRequests: async (type = null) => {
         const token = localStorage.getItem('accessToken');
-        if (!token) return;
+        if (!token) return null;
         
         set({ isLoading: true, error: null });
         try {
           const url = type 
-            ? `http://localhost:8000/api/transactions/requests?type=${type}`
-            : 'http://localhost:8000/api/transactions/requests';
+            ? `${API_URL}/transactions/requests?type=${type}`
+            : `${API_URL}/transactions/requests`;
             
           const response = await fetch(url, {
             headers: {
@@ -241,8 +312,6 @@ const useWalletStore = create(
           });
           
           const data = await response.json();
-          console.log(data);
-          console.log("Fetched money requests:", data.requests);
           
           if (!response.ok) {
             throw new Error(data.message || 'Failed to fetch money requests');
@@ -259,17 +328,209 @@ const useWalletStore = create(
             isLoading: false, 
             error: error.message 
           });
+          return null;
+        }
+      },
+      
+      fetchUserProfile: async () => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return null;
+        
+        set({ isLoading: true });
+        try {
+          const response = await fetch(`${API_URL}/auth/profile`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          
+          const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.message || 'Failed to fetch user profile');
+          }
+          
+          set({
+            userProfile: data.user,
+            isLoading: false,
+          });
+          
+          return data.user;
+        } catch (error) {
+          set({ 
+            isLoading: false, 
+            error: error.message 
+          });
+          return null;
+        }
+      },
+      
+      fetchVerificationStatus: async () => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return;
+        
+        set({ verificationStatus: { ...get().verificationStatus, loading: true } });
+        try {
+          const userData = await get().fetchUserProfile();
+          
+          if (userData && userData.verified === true) {
+            set({
+              verificationStatus: {
+                isVerified: true,
+                pendingRequests: [],
+                loading: false
+              }
+            });
+            return;
+          }
+          
+          // Fetch both passport and gun license verification requests
+          const [passportRes, gunRes] = await Promise.all([
+            fetch(`${API_URL}/verification/passport/me`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }).catch(() => ({ ok: false })),
+            
+            fetch(`${API_URL}/verification/gun/me`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }).catch(() => ({ ok: false }))
+          ]);
+          
+          const pendingRequests = [];
+          
+          if (passportRes.ok) {
+            const passportData = await passportRes.json();
+            if (passportData && passportData.verifications) {
+              pendingRequests.push(...passportData.verifications.map(v => ({...v, type: 'passport'})));
+            }
+          }
+          
+          if (gunRes.ok) {
+            const gunData = await gunRes.json();
+            if (gunData && gunData.verifications) {
+              pendingRequests.push(...gunData.verifications.map(v => ({...v, type: 'gun'})));
+            }
+          }
+          
+          set({
+            verificationStatus: {
+              isVerified: false,
+              pendingRequests,
+              loading: false
+            }
+          });
+        } catch (error) {
+          console.error("Error fetching verification status:", error);
+          set({ 
+            verificationStatus: {
+              ...get().verificationStatus,
+              loading: false
+            }
+          });
+        }
+      },
+      
+      fetchUsers: async () => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return null;
+        
+        set({ isLoading: true, error: null });
+        try {
+          const response = await fetch(`${API_URL}/transactions/users/transfer`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          
+          const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.message || 'Failed to fetch users');
+          }
+          
+          set({
+            users: data.users,
+            isUsersFetched: true,
+            isLoading: false,
+          });
+          
+          return data.users;
+        } catch (error) {
+          set({ 
+            isLoading: false, 
+            error: error.message 
+          });
+          return null;
         }
       },
       
       clearError: () => set({ error: null }),
+      
+      // Utility Functions
+      getCurrencySymbol: (currency) => {
+        return CURRENCIES.find(c => c.value === currency)?.symbol || "";
+      },
+      
+      getBalanceDisplay: (currency) => {
+        const state = get();
+        const balance = state.wallet.balances?.find(b => b.currency === currency);
+        const currencyObj = CURRENCIES.find(c => c.value === currency);
+        if (balance && currencyObj) {
+          return `${currencyObj.symbol}${balance.amount.toFixed(2)}`;
+        }
+        return `${currency} 0.00`;
+      },
+      
+      getTotalBalanceInUSD: () => {
+        const state = get();
+        if (!state.wallet.balances || state.wallet.balances.length === 0) return 0;
+        
+        return state.wallet.balances.reduce((total, balance) => {
+          const amountInUSD = balance.currency === 'USD' 
+            ? balance.amount 
+            : get().convertCurrency(balance.amount, balance.currency, 'USD');
+          return total + amountInUSD;
+        }, 0);
+      },
+      
+      convertCurrency: (amount, fromCurrency, toCurrency) => {
+        if (fromCurrency === toCurrency) return amount;
+        const rate = exchangeRates[fromCurrency]?.[toCurrency] || 0;
+        return amount * rate;
+      },
+      
+      formatDate: (dateString) => {
+        if (!dateString) return "Unknown date";
+        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        return new Date(dateString).toLocaleDateString(undefined, options);
+      },
+      
+      getReceiveQRData: () => {
+        const state = get();
+        if (!state.userProfile || !state.userProfile.email) return null;
+        
+        return JSON.stringify({
+          email: state.userProfile.email,
+          name: state.userProfile.fullname || state.userProfile.email,
+          walletId: state.wallet.walletId || ''
+        });
+      },
+      
+      // Initialize wallet data
+      initializeWallet: async () => {
+        await get().fetchUserProfile();
+        await get().fetchBalance();
+        await get().fetchTransactions();
+        await get().fetchMoneyRequests();
+        await get().fetchVerificationStatus();
+      }
     }),
     {
       name: 'wallet-storage',
       partialize: (state) => ({ 
-        balance: state.balance,
+        wallet: state.wallet,
         transactions: state.transactions,
-        requests: state.requests
+        requests: state.requests,
+        recentRecipients: state.recentRecipients
       }),
     }
   )

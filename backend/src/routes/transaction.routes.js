@@ -17,8 +17,7 @@ import {
 
 const router = express.Router();
 
-// Apply auth middleware to all routes
-router.use(verifyJWT);
+router.use(verifyJWT); 
 
 // Wallet routes
 router.get('/balance', getWalletBalance);
@@ -36,18 +35,18 @@ router.get('/requests', getMoneyRequests);
 // Individual transaction details - must be after all specific routes
 router.get('/:transactionId', getTransactionDetails);
 
-// Deposit and withdraw
+// Deposit and withdraw - all parameters should be in request body
 router.post('/deposit', depositFunds);
 router.post('/withdraw', withdrawFunds);
 
-// Money transfer
+// Money transfer - all parameters should be in request body
 router.post('/send', sendMoney);
 
-// Currency exchange
+// Currency exchange - all parameters should be in request body
 router.post('/exchange', exchangeCurrency);
 
-// Money requests - POST routes
+// Money requests - POST routes - all parameters should be in request body
 router.post('/request', requestMoney);
-router.post('/pay-request', payRequest);
+router.post('/pay-request', payRequest); // Expects requestId in the request body
 
 export default router;

@@ -23,7 +23,7 @@ export default function RootLayout({ children }) {
   const { fetchAllVerifications } = useVerificationStore();
 
   useEffect(() => {
-    // Initialize stores data when dashboard layout mounts
+
     fetchUser();
     fetchBalance();
     fetchTransactions();
@@ -32,14 +32,10 @@ export default function RootLayout({ children }) {
   }, [fetchUser, fetchBalance, fetchTransactions, fetchMoneyRequests, fetchAllVerifications]);
 
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+
         <WalletSidebar>
           {children}
         </WalletSidebar>
-      </body>
-    </html>
+  
   );
 }

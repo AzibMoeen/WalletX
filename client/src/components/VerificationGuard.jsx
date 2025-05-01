@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 import useAuthStore from '@/lib/store/useAuthStore';
 import { toast } from 'sonner';
 
-const ProtectedRoute = ({ children, requireVerification = false }) => {
+const ProtectedRoute = ({ children, requireVerification = false ,isAdmin = false}) => {
   const router = useRouter();
   const { user, isAuthenticated, fetchUser, isLoading } = useAuthStore();
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -24,8 +24,7 @@ const ProtectedRoute = ({ children, requireVerification = false }) => {
 
         if (!isAuthenticated || !currentUser) {
           if (isMounted) {
-            toast.success("Please log in to access this page.");
-            router.replace('/login');
+            router.push('/login');
           }
           return;
         }
@@ -36,6 +35,16 @@ const ProtectedRoute = ({ children, requireVerification = false }) => {
             router.replace('/verification');
           }
           return;
+        }
+        if (isAdmin && !currentUser.isAdmin) {
+          if (isMounted) {
+            toast.error("You do not have permission to access this page.");
+            router.push('/login');
+          }
+          return;
+        }
+        if (isMounted) {
+          setCheckingAuth(false);
         }
 
       } catch (error) {
@@ -53,7 +62,7 @@ const ProtectedRoute = ({ children, requireVerification = false }) => {
     return () => {
       isMounted = false;
     };
-  }, [fetchUser, isAuthenticated, requireVerification, router, user]);
+  }, [fetchUser, isAuthenticated, requireVerification, router, user, isAdmin]);
 
   if (checkingAuth || isLoading) {
     return (

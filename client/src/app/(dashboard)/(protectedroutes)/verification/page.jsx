@@ -31,7 +31,6 @@ export default function VerificationPage() {
       setIsLoadingVerifications(true);
       const token = localStorage.getItem("accessToken");
       
-      // Fetch both passport and gun verifications
       const [passportRes, gunRes] = await Promise.all([
         fetch("http://localhost:8000/api/verification/passport/me", {
           headers: { Authorization: `Bearer ${token}` }
@@ -118,13 +117,11 @@ export default function VerificationPage() {
         body: formData
       });
       
-      // Check content type before parsing as JSON
       const contentType = response.headers.get('content-type');
       let data;
       if (contentType && contentType.includes('application/json')) {
         data = await response.json();
       } else {
-        // Handle non-JSON response
         const text = await response.text();
         console.error('Received non-JSON response:', text);
         throw new Error('Server returned an invalid response format');
@@ -135,9 +132,7 @@ export default function VerificationPage() {
       }
       
       setPassportSubmitMessage({ type: 'success', text: 'Passport verification submitted successfully' });
-      // Clear form after successful submission
       setPassportFile(null);
-      // Refresh verifications list
       fetchVerificationStatus();
     } catch (error) {
       console.error('Error submitting passport verification:', error);

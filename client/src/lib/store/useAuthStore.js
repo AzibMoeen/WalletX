@@ -30,7 +30,6 @@ const useAuthStore = create(
           
           
           localStorage.setItem('accessToken', data.accessToken);
-          // Also store user for backward compatibility with existing code
           localStorage.setItem('user', JSON.stringify(data.user));
           
           set({
@@ -50,7 +49,6 @@ const useAuthStore = create(
         }
       },
       
-      // Register action
       register: async (userData) => {
         set({ isLoading: true, error: null });
         try {

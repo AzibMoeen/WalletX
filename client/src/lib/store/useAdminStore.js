@@ -143,7 +143,7 @@ const useAdminStore = create(
           if (page) queryParams.append('page', page);
           
           const token = localStorage.getItem('accessToken');
-          const response = await fetch(`http://localhost:8000/api/admin/verification/passport?${queryParams.toString()}`, {
+          const response = await fetch(`http://localhost:8000/api/admin/verifications/passport?${queryParams.toString()}`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -186,7 +186,7 @@ const useAdminStore = create(
           if (page) queryParams.append('page', page);
           
           const token = localStorage.getItem('accessToken');
-          const response = await fetch(`http://localhost:8000/api/admin/verification/gun?${queryParams.toString()}`, {
+          const response = await fetch(`http://localhost:8000/api/admin/verifications/gun?${queryParams.toString()}`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -219,7 +219,7 @@ const useAdminStore = create(
         set({ isLoading: true, error: null });
         try {
           const token = localStorage.getItem('accessToken');
-          const response = await fetch(`http://localhost:8000/api/admin/verification/passport/${verificationId}`, {
+          const response = await fetch(`http://localhost:8000/api/admin/verifications/passport/${verificationId}`, {
             method: 'PATCH',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -259,7 +259,7 @@ const useAdminStore = create(
         set({ isLoading: true, error: null });
         try {
           const token = localStorage.getItem('accessToken');
-          const response = await fetch(`http://localhost:8000/api/admin/verification/gun/${verificationId}`, {
+          const response = await fetch(`http://localhost:8000/api/admin/verifications/gun/${verificationId}`, {
             method: 'PATCH',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -299,7 +299,7 @@ const useAdminStore = create(
         set({ isLoading: true, error: null });
         try {
           const token = localStorage.getItem('accessToken');
-          const response = await fetch(`http://localhost:8000/api/admin/dashboard`, {
+          const response = await fetch(`http://localhost:8000/api/admin/dashboard/stats`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -327,7 +327,6 @@ const useAdminStore = create(
         }
       },
       
-      // Clear error state
       clearError: () => set({ error: null }),
     }),
     {

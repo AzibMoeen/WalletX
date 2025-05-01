@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
-import { Wallet, AlertCircle, Loader2 } from "lucide-react"
+import { Wallet, AlertCircle, Loader2, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import useAuthStore from "@/lib/store/useAuthStore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,7 +16,13 @@ import { Separator } from "@/components/ui/separator"
 const Login = () => {
   const [serverError, setServerError] = useState("")
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { login, isAuthenticated, isLoading, error, clearError } = useAuthStore()
+  
+  // Check if user was redirected from successful verification
+  const verified = searchParams.get('verified') === 'true'
+  // Check if user was redirected from successful password reset
+  const passwordReset = searchParams.get('reset') === 'success'
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -54,6 +60,24 @@ const Login = () => {
           </CardHeader>
 
           <CardContent className="space-y-4">
+            {verified && (
+              <Alert className="bg-green-50 border-green-200 text-green-800">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-700">
+                  Your email has been verified successfully. You can now log in to your account.
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {passwordReset && (
+              <Alert className="bg-green-50 border-green-200 text-green-800">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-700">
+                  Your password has been reset successfully. You can now log in with your new password.
+                </AlertDescription>
+              </Alert>
+            )}
+            
             {(serverError || error) && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />

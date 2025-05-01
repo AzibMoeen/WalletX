@@ -205,13 +205,9 @@ const SendMoneyForm = ({
           </div>
           
           <Button type="submit" className="w-full" disabled={isLoading || !verificationStatus.isVerified}>
-            {isLoading ? (
-              "Processing..."
-            ) : (
               <>
                 <SendHorizontal className="mr-2 h-4 w-4" /> Send Money
               </>
-            )}
           </Button>
         </form>
       </CardContent>

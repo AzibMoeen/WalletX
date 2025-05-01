@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import useAdminStore from "@/lib/store/useAdminStore"
 
 // Import our new components
 import { UsersHeader } from "./components/UsersHeader"
@@ -10,58 +11,20 @@ import { UsersTable } from "./components/UsersTable"
 import { DeleteUserDialog } from "./components/DeleteUserDialog"
 
 export default function UsersPage() {
-  const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { 
+    users, 
+    isLoading, 
+    fetchUsers, 
+    deleteUser 
+  } = useAdminStore();
+  
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedUser, setSelectedUser] = useState(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   useEffect(() => {
     fetchUsers()
-  }, [])
-
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch("http://localhost:8000/api/admin/users", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setUsers(data.users);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      setLoading(false);
-    }
-  };
-
-  const deleteUser = async (userId) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(`http://localhost:8000/api/admin/users/${userId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
-      }
-      
-      setUsers(users.filter(user => user._id !== userId));
-    } catch (error) {
-      console.error("Error deleting user:", error);
-    }
-  };
+  }, [fetchUsers])
 
   const handleDeleteUser = () => {
     if (selectedUser) {
@@ -105,7 +68,7 @@ export default function UsersPage() {
           <div className="overflow-x-auto w-full">
             <UsersTable 
               users={filteredUsers}
-              loading={loading}
+              loading={isLoading}
               formatDate={formatDate}
               setSelectedUser={setSelectedUser}
               setDeleteDialogOpen={setDeleteDialogOpen}

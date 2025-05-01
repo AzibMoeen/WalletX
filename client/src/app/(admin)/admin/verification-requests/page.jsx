@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog } from "@/components/ui/dialog"
+import useAdminStore from "@/lib/store/useAdminStore"
 
 import { SearchHeader } from "./components/SearchHeader"
 import { RequestsTable } from "./components/RequestsTable"
@@ -11,82 +12,39 @@ import { RequestDetailDialog } from "./components/RequestDetailDialog"
 
 export default function VerificationRequestsPage() {
   const [activeTab, setActiveTab] = useState("passport")
-  const [passportRequests, setPassportRequests] = useState([])
-  const [gunRequests, setGunRequests] = useState([])
-  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedRequest, setSelectedRequest] = useState(null)
   const [viewDialogOpen, setViewDialogOpen] = useState(false)
 
-  useEffect(() => {
-    fetchRequests()
-  }, [])
+  // Use the admin store for verification requests data and operations
+  const { 
+    passportVerifications, 
+    gunVerifications, 
+    isLoading,
+    fetchPassportVerifications,
+    fetchGunVerifications,
+    updatePassportVerificationStatus,
+    updateGunVerificationStatus
+  } = useAdminStore();
 
-  const fetchRequests = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("accessToken");
-      
-      // Fetch passport verification requests
-      const passportResponse = await fetch("http://localhost:8000/api/admin/verifications/passport", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      // Fetch gun verification requests
-      const gunResponse = await fetch("http://localhost:8000/api/admin/verifications/gun", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      if (!passportResponse.ok || !gunResponse.ok) {
-        throw new Error("Failed to fetch verification requests");
-      }
-      
-      const passportData = await passportResponse.json();
-      const gunData = await gunResponse.json();
-      
-      setPassportRequests(passportData.verifications);
-      setGunRequests(gunData.verifications);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching verification requests:", error);
-      setLoading(false);
-    }
+  useEffect(() => {
+    fetchVerificationRequests();
+  }, []);
+
+  const fetchVerificationRequests = async () => {
+    // Fetch both types of verification requests
+    await Promise.all([
+      fetchPassportVerifications(),
+      fetchGunVerifications()
+    ]);
   };
 
   const updateVerificationStatus = async (id, type, status) => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      
-      const response = await fetch(`http://localhost:8000/api/admin/verifications/${type}/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ status })
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to update verification status");
-      }
-      
-      // Update local state after successful API call
-      if (type === 'passport') {
-        setPassportRequests(passportRequests.map(req => 
-          req._id === id ? { ...req, status } : req
-        ));
-      } else {
-        setGunRequests(gunRequests.map(req => 
-          req._id === id ? { ...req, status } : req
-        ));
-      }
-    } catch (error) {
-      console.error(`Error updating ${type} verification status:`, error);
+    if (type === 'passport') {
+      await updatePassportVerificationStatus(id, status);
+    } else {
+      await updateGunVerificationStatus(id, status);
     }
   };
 
@@ -109,14 +67,14 @@ export default function VerificationRequestsPage() {
       // Apply search filter to user fullname or email
       const searchLower = searchQuery.toLowerCase()
       return (
-        req.user.fullname.toLowerCase().includes(searchLower) ||
-        req.user.email.toLowerCase().includes(searchLower)
+        (req.user?.fullname?.toLowerCase() || "").includes(searchLower) ||
+        (req.user?.email?.toLowerCase() || "").includes(searchLower)
       )
     })
   }
 
-  const filteredPassportRequests = getFilteredRequests(passportRequests)
-  const filteredGunRequests = getFilteredRequests(gunRequests)
+  const filteredPassportRequests = getFilteredRequests(passportVerifications)
+  const filteredGunRequests = getFilteredRequests(gunVerifications)
 
   return (
     <div className="flex flex-col gap-6">
@@ -135,7 +93,7 @@ export default function VerificationRequestsPage() {
             setSearchQuery={setSearchQuery}
             statusFilter={statusFilter}
             setStatusFilter={setStatusFilter}
-            fetchRequests={fetchRequests}
+            fetchRequests={fetchVerificationRequests}
           />
         </CardHeader>
         <CardContent>
@@ -148,7 +106,7 @@ export default function VerificationRequestsPage() {
             <TabsContent value="passport">
               <RequestsTable 
                 requests={filteredPassportRequests}
-                loading={loading}
+                loading={isLoading}
                 type="passport"
                 formatDate={formatDate}
                 updateVerificationStatus={updateVerificationStatus}
@@ -160,7 +118,7 @@ export default function VerificationRequestsPage() {
             <TabsContent value="gun">
               <RequestsTable 
                 requests={filteredGunRequests}
-                loading={loading}
+                loading={isLoading}
                 type="gun"
                 formatDate={formatDate}
                 updateVerificationStatus={updateVerificationStatus}

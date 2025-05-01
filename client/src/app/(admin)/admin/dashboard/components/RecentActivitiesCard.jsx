@@ -1,7 +1,42 @@
 import { Users, FileCheck, CreditCard, AlertTriangle, ArrowRight } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 
-const RecentActivitiesCard = () => {
+const ActivityIcon = ({ type }) => {
+  switch (type) {
+    case 'USER_REGISTERED':
+      return <Users className="h-5 w-5 text-primary" />
+    case 'VERIFICATION_SUBMITTED':
+    case 'VERIFICATION_APPROVED':
+    case 'VERIFICATION_REJECTED':
+      return <FileCheck className="h-5 w-5 text-primary" />
+    case 'TRANSACTION':
+      return <CreditCard className="h-5 w-5 text-primary" />
+    default:
+      return <AlertTriangle className="h-5 w-5 text-primary" />
+  }
+}
+
+const formatTimeAgo = (dateString) => {
+  const now = new Date()
+  const date = new Date(dateString)
+  const seconds = Math.floor((now - date) / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+
+  if (days > 0) {
+    return days === 1 ? 'Yesterday' : `${days} days ago`
+  } else if (hours > 0) {
+    return `${hours}h ago`
+  } else if (minutes > 0) {
+    return `${minutes}m ago`
+  } else {
+    return 'Just now'
+  }
+}
+
+const RecentActivitiesCard = ({ activities = [], loading = false }) => {
   return (
     <Card className="md:col-span-2">
       <CardHeader>
@@ -10,46 +45,38 @@ const RecentActivitiesCard = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="flex items-center gap-4 rounded-lg border p-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-              <Users className="h-5 w-5 text-primary" />
+          {loading ? (
+            // Loading skeletons
+            Array(4).fill(0).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 rounded-lg border p-3">
+                <Skeleton className="h-9 w-9 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+                <Skeleton className="h-3 w-12" />
+              </div>
+            ))
+          ) : activities && activities.length > 0 ? (
+            // Actual activities from the store
+            activities.slice(0, 4).map((activity, index) => (
+              <div key={index} className="flex items-center gap-4 rounded-lg border p-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+                  <ActivityIcon type={activity.type} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{activity.title}</p>
+                  <p className="text-xs text-muted-foreground">{activity.description}</p>
+                </div>
+                <div className="text-xs text-muted-foreground">{formatTimeAgo(activity.timestamp)}</div>
+              </div>
+            ))
+          ) : (
+            // Fallback when no activities
+            <div className="text-center py-6 text-muted-foreground">
+              No recent activities to display
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">New user registered</p>
-              <p className="text-xs text-muted-foreground">John Doe created a new account</p>
-            </div>
-            <div className="text-xs text-muted-foreground">2h ago</div>
-          </div>
-          <div className="flex items-center gap-4 rounded-lg border p-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-              <FileCheck className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">Verification request submitted</p>
-              <p className="text-xs text-muted-foreground">Alice Johnson submitted passport verification</p>
-            </div>
-            <div className="text-xs text-muted-foreground">5h ago</div>
-          </div>
-          <div className="flex items-center gap-4 rounded-lg border p-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-              <CreditCard className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">Large transaction detected</p>
-              <p className="text-xs text-muted-foreground">Transaction of $5,000 by Mark Smith</p>
-            </div>
-            <div className="text-xs text-muted-foreground">Yesterday</div>
-          </div>
-          <div className="flex items-center gap-4 rounded-lg border p-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">Failed login attempts</p>
-              <p className="text-xs text-muted-foreground">Multiple failed login attempts for user ID #23421</p>
-            </div>
-            <div className="text-xs text-muted-foreground">2 days ago</div>
-          </div>
+          )}
         </div>
       </CardContent>
       <CardFooter>
