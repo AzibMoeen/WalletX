@@ -106,7 +106,7 @@ export default function HomePage() {
               </Link>
               <div className="mt-4 space-y-2 px-3">
                 {isAuthenticated ? (
-                  <Link href="/dashboard">
+                  <Link href="/wallet">
                     <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
                       Dashboard
                     </Button>
@@ -191,7 +191,6 @@ export default function HomePage() {
       priority
     />
     
-    {/* Overlay with text and icon */}
     <div className="absolute inset-0 flex items-center justify-center bg-black/30">
       <div className="text-center text-white">
         <Wallet className="w-16 h-16 mx-auto mb-4" />
