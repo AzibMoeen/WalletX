@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { getApiUrl } from '@/lib/config';
 
 const useVerificationStore = create(
   persist(
@@ -15,7 +16,7 @@ const useVerificationStore = create(
         
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch('http://localhost:8000/api/verification/passport/me', {
+          const response = await fetch(getApiUrl('api/verification/passport/me'), {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
@@ -48,7 +49,7 @@ const useVerificationStore = create(
         
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch('http://localhost:8000/api/verification/gun/me', {
+          const response = await fetch(getApiUrl('api/verification/gun/me'), {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
@@ -81,7 +82,7 @@ const useVerificationStore = create(
         
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch('http://localhost:8000/api/verification/passport', {
+          const response = await fetch(getApiUrl('api/verification/passport'), {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -126,7 +127,7 @@ const useVerificationStore = create(
         
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch('http://localhost:8000/api/verification/gun', {
+          const response = await fetch(getApiUrl('api/verification/gun'), {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,

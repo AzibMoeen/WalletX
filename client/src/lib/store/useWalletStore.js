@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { toast } from 'sonner';
+import { getApiUrl } from '@/lib/config';
 
 const CURRENCIES = [
   { value: "USD", label: "USD ($)", symbol: "$" },
@@ -14,7 +15,8 @@ const exchangeRates = {
   PKR: { USD: 0.0036, EUR: 0.0033 }
 };
 
-const API_URL =  "http://localhost:8000/api";
+// Using the API URL from configuration
+const API_URL = getApiUrl('api');
 
 const useWalletStore = create(
   persist(
