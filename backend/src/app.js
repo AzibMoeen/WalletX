@@ -22,8 +22,12 @@ const allowedOrigins = [
     "https://new-origin.example.com",
     "https://wallet-x-gn6u-git-master-azibmoeens-projects.vercel.app"
 ];
-//allow all origins
-app.use(cors());
+app.use(cors({
+  origin: '*', // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 
 
 app.use(express.json({ limit: "16kb" }));
