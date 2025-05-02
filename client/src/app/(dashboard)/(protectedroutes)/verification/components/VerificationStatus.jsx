@@ -2,7 +2,7 @@ import { User, Shield, Upload, Check } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 
-const VerificationStatus = () => {
+const VerificationStatus = ({ isVerified }) => {
   return (
     <Card className="md:col-span-3">
       <CardHeader className="pb-3">
@@ -27,30 +27,48 @@ const VerificationStatus = () => {
           <Separator />
 
           <div className="flex items-center gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${isVerified ? "bg-green-100 text-green-600" : "bg-primary text-primary-foreground"}`}>
               <Shield className="h-5 w-5" />
             </div>
             <div className="flex-1 space-y-1">
               <p className="font-medium leading-none">Identity Verification</p>
-              <p className="text-sm text-muted-foreground">Verify your passport or gun license</p>
+              <p className="text-sm text-muted-foreground">
+                {isVerified 
+                  ? "Your identity has been verified"
+                  : "Verify your passport or gun license"
+                }
+              </p>
             </div>
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100">
-              <div className="h-2 w-2 rounded-full bg-amber-500"></div>
+            <div className={`flex h-8 w-8 items-center justify-center rounded-full ${isVerified ? "bg-green-100" : "bg-amber-100"}`}>
+              {isVerified ? (
+                <Check className="h-4 w-4 text-green-600" />
+              ) : (
+                <div className="h-2 w-2 rounded-full bg-amber-500"></div>
+              )}
             </div>
           </div>
 
           <Separator />
 
           <div className="flex items-center gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${isVerified ? "bg-green-100 text-green-600" : "bg-muted text-muted-foreground"}`}>
               <Upload className="h-5 w-5" />
             </div>
             <div className="flex-1 space-y-1">
               <p className="font-medium leading-none">Address Verification</p>
-              <p className="text-sm text-muted-foreground">Upload proof of address</p>
+              <p className="text-sm text-muted-foreground">
+                {isVerified
+                  ? "Address verification complete"
+                  : "Upload proof of address"
+                }
+              </p>
             </div>
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-              <div className="h-2 w-2 rounded-full bg-muted-foreground"></div>
+            <div className={`flex h-8 w-8 items-center justify-center rounded-full ${isVerified ? "bg-green-100" : "bg-muted"}`}>
+              {isVerified ? (
+                <Check className="h-4 w-4 text-green-600" />
+              ) : (
+                <div className="h-2 w-2 rounded-full bg-muted-foreground"></div>
+              )}
             </div>
           </div>
         </div>

@@ -191,6 +191,7 @@ export default function HomePage() {
       priority
     />
     
+    {/* Overlay with text and icon */}
     <div className="absolute inset-0 flex items-center justify-center bg-black/30">
       <div className="text-center text-white">
         <Wallet className="w-16 h-16 mx-auto mb-4" />
@@ -200,6 +201,9 @@ export default function HomePage() {
     </div>
   </div>
 </div>
+            </motion.div>
+          </div>
+        </div>
       </section>
 
       {/* Features Section */}
@@ -368,7 +372,7 @@ export default function HomePage() {
                     <BarChart3 className="h-8 w-8 text-purple-600" />
                   </div>
                 </div>
-                <h3 className="text-lg font-semibold text-center mb-4">Track & Manage</h3>
+                <h3 className="text-lg font-semibold text-center mb-4">Track &amp; Manage</h3>
                 <p className="text-gray-600 text-center">
                   Monitor your spending, view transaction history, and manage your finances with ease.
                 </p>

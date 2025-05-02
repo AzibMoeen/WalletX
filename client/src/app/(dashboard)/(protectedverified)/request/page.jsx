@@ -6,15 +6,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import NewRequestForm from "./components/NewRequestForm"
 import ReceivedRequestsCard from "./components/ReceivedRequestsCard"
 import SentRequestsCard from "./components/SentRequestsCard"
-import axios from "axios"
 import useAuthStore from "@/lib/store/useAuthStore"
+import useWalletStore from "@/lib/store/useWalletStore"
 
 export default function RequestPage() {
   const router = useRouter()
-  const { isAuthenticated, user, accessToken, fetchUser } = useAuthStore()
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [requests, setRequests] = useState([])
+  const { isAuthenticated, user, fetchUser } = useAuthStore()
+  const { 
+    requests,
+    isLoading: storeLoading, 
+    error: storeError, 
+    success: storeSuccess,
+    fetchMoneyRequests,
+    requestMoney,
+    payMoneyRequest,
+    formatDate,
+    getCurrencySymbol,
+    setSuccess: setStoreSuccess,
+    clearError: clearStoreError
+  } = useWalletStore()
+  
+  const [localLoading, setLocalLoading] = useState(false)
+  const [localError, setLocalError] = useState(null)
+  const [localSuccess, setLocalSuccess] = useState(false)
   
   const [formData, setFormData] = useState({
     targetEmail: "",
@@ -23,12 +37,9 @@ export default function RequestPage() {
     notes: ""
   })
   
-  const [success, setSuccess] = useState(false)
   const [activeTab, setActiveTab] = useState("new-request")
   const [receivedRequests, setReceivedRequests] = useState([])
   const [sentRequests, setSentRequests] = useState([])
-  
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://walletx-production.up.railway.app/api"
   
   // Ensure user is authenticated first
   useEffect(() => {
@@ -37,106 +48,12 @@ export default function RequestPage() {
     }
   }, [isAuthenticated, user, fetchUser])
   
-  // Fetch all money requests
-  const fetchMoneyRequests = async () => {
-    try {
-      setIsLoading(true)
-      
-      // Use the token from auth store
-      const token = accessToken
-      
-      const response = await axios.get(`${API_URL}/transactions/requests`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-      
-      if (response.data && response.data.requests) {
-        setRequests(response.data.requests)
-      }
-      setError(null)
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to fetch money requests")
-      console.error("Error fetching money requests:", err)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-  
-  // Request money function
-  const requestMoney = async (requestData) => {
-    try {
-      setIsLoading(true)
-      // Use the token from auth store
-      const token = accessToken
-      
-      const response = await axios.post(`${API_URL}/transactions/request`, requestData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      })
-      
-      setSuccess(true)
-      // Refresh the requests list
-      fetchMoneyRequests()
-      setError(null)
-      return response.data
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to send money request")
-      console.error("Error requesting money:", err)
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }
-  
-  // Pay money request function
-  const payMoneyRequest = async (requestId) => {
-    try {
-      setIsLoading(true)
-      // Use the token from auth store
-      const token = accessToken
-      
-      console.log("Paying request ID:", requestId); 
-      const payload = { requestId };
-      console.log("Request payload:", payload);
-      
-      const response = await axios({
-        method: 'post',
-        url: `${API_URL}/transactions/pay-request`,
-        data: payload,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      });
-      
-      // Refresh the requests list
-      fetchMoneyRequests()
-      setError(null)
-      return response.data
-    } catch (err) {
-      console.error("Error paying money request:", err)
-      const errorMessage = err.response?.data?.message || "Failed to pay money request"
-      setError(errorMessage)
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }
-  
-  // Clear error state
-  const clearError = () => {
-    setError(null)
-  }
-  
   // Fetch requests when user is authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
       fetchMoneyRequests()
     }
-  }, [isAuthenticated, user])
+  }, [isAuthenticated, user, fetchMoneyRequests])
   
   // Update requests list when requests state changes
   useEffect(() => {
@@ -174,8 +91,9 @@ export default function RequestPage() {
   
   const handleSubmit = async (e) => {
     e.preventDefault()
-    clearError()
-    setSuccess(false)
+    clearLocalError()
+    setLocalSuccess(false)
+    setStoreSuccess(false)
     
     try {
       // Validate form
@@ -187,7 +105,7 @@ export default function RequestPage() {
         throw new Error("Please enter a valid amount")
       }
       
-      // Make request
+      // Make request using the store method
       await requestMoney({
         targetEmail: formData.targetEmail,
         amount: parseFloat(formData.amount),
@@ -195,7 +113,7 @@ export default function RequestPage() {
         notes: formData.notes
       })
       
-      setSuccess(true)
+      setLocalSuccess(true)
       
       // Reset form
       setFormData({
@@ -211,37 +129,29 @@ export default function RequestPage() {
       }, 1500)
       
     } catch (err) {
-      setError(err.message || "An error occurred while sending the request")
+      setLocalError(err.message || "An error occurred while sending the request")
       console.error(err)
     }
   }
   
-  // Helper to format currency
-  const getCurrencySymbol = (currency) => {
-    switch (currency) {
-      case "USD": return "$"
-      case "EUR": return "€"
-      case "PKR": return "₨"
-      default: return "$"
-    }
-  }
-  
-  // Format date to readable format
-  const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }
-    return new Date(dateString).toLocaleDateString(undefined, options)
+  const clearLocalError = () => {
+    setLocalError(null)
+    clearStoreError()
   }
   
   // Handle paying a money request
   const handlePayRequest = async (requestId) => {
     try {
       await payMoneyRequest(requestId)
-      // After successful payment, fetch updated requests
-      fetchMoneyRequests()
     } catch (err) {
       console.error(err)
     }
   }
+
+  // Combine local and store states
+  const isLoading = storeLoading || localLoading
+  const error = localError || storeError
+  const success = localSuccess || storeSuccess
 
   return (
     <div className="container mx-auto py-10">

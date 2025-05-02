@@ -8,12 +8,7 @@ import BalanceCard from "../withdraw/components/BalanceCard"
 import ExchangeForm from "./components/ExchangeForm"
 import ExchangeRatesCard from "./components/ExchangeRatesCard"
 import ExchangeHistoryCard from "./components/ExchangeHistoryCard"
-
-const CURRENCIES = [
-  { value: "USD", label: "USD ($)", symbol: "$" },
-  { value: "EUR", label: "EUR (€)", symbol: "€" },
-  { value: "PKR", label: "PKR (₨)", symbol: "₨" }
-]
+import useWalletStore from "@/lib/store/useWalletStore"
 
 // Demo exchange rates
 const EXCHANGE_RATES = {
@@ -24,27 +19,37 @@ const EXCHANGE_RATES = {
 
 export default function ExchangePage() {
   const router = useRouter()
-  const [wallet, setWallet] = useState({ balances: [] })
+  const { 
+    wallet, 
+    isLoading: storeLoading, 
+    error: storeError,
+    success: storeSuccess,
+    fetchBalance,
+    getBalanceDisplay,
+    getCurrencySymbol,
+    setSuccess: setStoreSuccess
+  } = useWalletStore()
+  
   const [fromCurrency, setFromCurrency] = useState("USD")
   const [toCurrency, setToCurrency] = useState("EUR")
   const [fromAmount, setFromAmount] = useState("")
   const [toAmount, setToAmount] = useState("")
   const [conversionRate, setConversionRate] = useState(0)
-  const [isLoading, setIsLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [error, setError] = useState("")
+  const [localLoading, setLocalLoading] = useState(false)
+  const [localSuccess, setLocalSuccess] = useState(false)
+  const [localError, setLocalError] = useState("")
   const [exchangeHistory, setExchangeHistory] = useState([])
   const [exchangeRates, setExchangeRates] = useState([])
   const [lastUpdated, setLastUpdated] = useState("")
 
   useEffect(() => {
-    fetchWalletBalance()
+    fetchBalance()
     fetchExchangeHistory()
     generateExchangeRates()
     
     // Set the current time as last updated
     setLastUpdated(new Date().toLocaleTimeString())
-  }, [])
+  }, [fetchBalance])
 
   useEffect(() => {
     // Update conversion rate when currencies change
@@ -58,26 +63,6 @@ export default function ExchangePage() {
       }
     }
   }, [fromCurrency, toCurrency, fromAmount])
-
-  const fetchWalletBalance = async () => {
-    try {
-      const token = localStorage.getItem("accessToken")
-      const response = await fetch("https://walletx-production.up.railway.app/api/transactions/balance", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch wallet balance")
-      }
-      
-      const data = await response.json()
-      setWallet(data.wallet)
-    } catch (error) {
-      console.error("Error fetching wallet balance:", error)
-    }
-  }
   
   const fetchExchangeHistory = () => {
     // This would be replaced with a real API call
@@ -147,9 +132,10 @@ export default function ExchangePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setIsLoading(true)
-    setError("")
-    setSuccess(false)
+    setLocalLoading(true)
+    setLocalError("")
+    setLocalSuccess(false)
+    setStoreSuccess(false)
     
     try {
       // Validate form
@@ -183,9 +169,9 @@ export default function ExchangePage() {
       }
       
       // Update wallet balance
-      await fetchWalletBalance()
+      await fetchBalance()
       
-      setSuccess(true)
+      setLocalSuccess(true)
       
       // Add the exchange to history
       setExchangeHistory(prev => [{
@@ -206,26 +192,16 @@ export default function ExchangePage() {
       }, 2000)
       
     } catch (error) {
-      setError(error.message)
+      setLocalError(error.message)
     } finally {
-      setIsLoading(false)
+      setLocalLoading(false)
     }
   }
 
-  // Helper to format balance display
-  const getBalanceDisplay = (currency) => {
-    const balance = wallet.balances?.find(b => b.currency === currency)
-    const currencyObj = CURRENCIES.find(c => c.value === currency)
-    if (balance && currencyObj) {
-      return `${currencyObj.symbol}${balance.amount.toFixed(2)}`
-    }
-    return `${currency} 0.00`
-  }
-
-  // Get currency symbol
-  const getCurrencySymbol = (currency) => {
-    return CURRENCIES.find(c => c.value === currency)?.symbol || ""
-  }
+  // Combine local and store states
+  const isLoading = storeLoading || localLoading
+  const error = localError || storeError
+  const success = localSuccess || storeSuccess
 
   return (
     <div className="container mx-auto px-4 py-4 md:py-6 max-w-4xl">

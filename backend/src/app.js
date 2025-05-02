@@ -34,13 +34,12 @@ app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(cookieParser());
 
-// Routes
+
 app.use('/api/auth', authRoutes);
 app.use('/api/verification', verificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/transactions', transactionRoutes);
 
-// Basic routes
 app.get('/', (req, res) => {
     res.status(200).json({ message: "Wallet API is running" });
 });

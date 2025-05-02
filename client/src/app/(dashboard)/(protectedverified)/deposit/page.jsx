@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import BalanceCard from "../withdraw/components/BalanceCard"// Fixed import
+import BalanceCard from "../withdraw/components/BalanceCard"
 import RecentDepositsCard from "./components/RecentDepositsCard"
 import DepositMethodsCard from "./components/DepositMethodsCard"
 import DepositOptionsSelector from "./components/DepositOptionsSelector"
 import CardDepositForm from "./components/CardDepositForm"
 import BankDepositForm from "./components/BankDepositForm"
+import useWalletStore from "@/lib/store/useWalletStore"
 
 const CURRENCIES = [
   { value: "USD", label: "USD ($)", symbol: "$" },
@@ -19,10 +20,20 @@ const CURRENCIES = [
 export default function DepositPage() {
   const router = useRouter()
   const [depositMethod, setDepositMethod] = useState("card")
-  const [isLoading, setIsLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [error, setError] = useState("")
-  const [wallet, setWallet] = useState({ balances: [] })
+  const { 
+    wallet, 
+    isLoading: storeLoading, 
+    error: storeError, 
+    success,
+    fetchBalance, 
+    depositFunds, 
+    getBalanceDisplay,
+    getCurrencySymbol,
+    setSuccess
+  } = useWalletStore()
+  
+  const [localLoading, setLocalLoading] = useState(false)
+  const [localError, setLocalError] = useState("")
   const [recentDeposits, setRecentDeposits] = useState([])
   
   const [formData, setFormData] = useState({
@@ -36,29 +47,9 @@ export default function DepositPage() {
   })
 
   useEffect(() => {
-    fetchWalletBalance()
+    fetchBalance()
     fetchRecentDeposits()
-  }, [])
-
-  const fetchWalletBalance = async () => {
-    try {
-      const token = localStorage.getItem("accessToken")
-      const response = await fetch("https://walletx-production.up.railway.app/api/transactions/balance", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch wallet balance")
-      }
-      
-      const data = await response.json()
-      setWallet(data.wallet)
-    } catch (error) {
-      console.error("Error fetching wallet balance:", error)
-    }
-  }
+  }, [fetchBalance])
   
   const fetchRecentDeposits = async () => {
     try {
@@ -86,14 +77,14 @@ export default function DepositPage() {
   const handleMethodChange = (value) => {
     setDepositMethod(value)
     // Reset form errors when changing methods
-    setError("")
+    setLocalError("")
     setSuccess(false)
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    setLocalLoading(true)
+    setLocalError("")
     setSuccess(false)
     
     try {
@@ -121,39 +112,21 @@ export default function DepositPage() {
         }
       }
       
-      const token = localStorage.getItem("accessToken")
-      const response = await fetch("https://walletx-production.up.railway.app/api/transactions/deposit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          amount: parseFloat(formData.amount),
-          currency: formData.currency,
-          method: depositMethod,
-          cardDetails: depositMethod === "card" ? {
-            cardNumber: formData.cardNumber,
-            expiryDate: formData.expiryDate,
-            cvv: formData.cvv,
-            cardholderName: formData.cardholderName
-          } : undefined,
-          bankDetails: depositMethod === "bank" ? {
-            transferReference: formData.transferReference
-          } : undefined
-        })
+      await depositFunds({
+        amount: parseFloat(formData.amount),
+        currency: formData.currency,
+        method: depositMethod,
+        cardDetails: depositMethod === "card" ? {
+          cardNumber: formData.cardNumber,
+          expiryDate: formData.expiryDate,
+          cvv: formData.cvv,
+          cardholderName: formData.cardholderName
+        } : undefined,
+        bankDetails: depositMethod === "bank" ? {
+          transferReference: formData.transferReference
+        } : undefined
       })
       
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Failed to process deposit")
-      }
-      
-      // Update wallet balance and recent deposits
-      await fetchWalletBalance()
-      await fetchRecentDeposits()
-      
-      setSuccess(true)
       // Reset form
       setFormData({
         amount: "",
@@ -171,26 +144,15 @@ export default function DepositPage() {
       }, 2000)
       
     } catch (error) {
-      setError(error.message)
+      setLocalError(error.message)
     } finally {
-      setIsLoading(false)
+      setLocalLoading(false)
     }
   }
 
-  // Helper to format balance display
-  const getBalanceDisplay = (currency) => {
-    const balance = wallet.balances?.find(b => b.currency === currency)
-    const currencyObj = CURRENCIES.find(c => c.value === currency)
-    if (balance && currencyObj) {
-      return `${currencyObj.symbol}${balance.amount.toFixed(2)}`
-    }
-    return `${currency} 0.00`
-  }
-
-  // Get currency symbol
-  const getCurrencySymbol = (currency) => {
-    return CURRENCIES.find(c => c.value === currency)?.symbol || ""
-  }
+  // Using combined loading and error states
+  const isLoading = storeLoading || localLoading
+  const error = localError || storeError
 
   return (
     <div className="container mx-auto px-4 py-4 md:py-6 max-w-4xl">

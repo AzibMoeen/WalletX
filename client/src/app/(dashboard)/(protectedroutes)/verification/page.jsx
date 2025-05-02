@@ -3,6 +3,10 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle } from "lucide-react";
+import useVerificationStore from "@/lib/store/useVerificationStore";
+import useAuthStore from "@/lib/store/useAuthStore";
 
 import VerificationStatus from "./components/VerificationStatus";
 import PassportVerificationForm from "./components/PassportVerificationForm";
@@ -14,47 +18,29 @@ export default function VerificationPage() {
   const [activeTab, setActiveTab] = useState("passport");
   const [passportFile, setPassportFile] = useState(null);
   const [gunLicenseFile, setGunLicenseFile] = useState(null);
-  const [isSubmittingPassport, setIsSubmittingPassport] = useState(false);
-  const [isSubmittingGun, setIsSubmittingGun] = useState(false);
   const [passportSubmitMessage, setPassportSubmitMessage] = useState(null);
   const [gunSubmitMessage, setGunSubmitMessage] = useState(null);
-  const [passportVerifications, setPassportVerifications] = useState([]);
-  const [gunVerifications, setGunVerifications] = useState([]);
-  const [isLoadingVerifications, setIsLoadingVerifications] = useState(true);
+  
+  const { user, isLoading: authLoading } = useAuthStore();
+  const isUserVerified = user?.verified === true;
+  
+  const { 
+    passportVerifications, 
+    gunVerifications, 
+    isLoading, 
+    error, 
+    fetchPassportVerifications, 
+    fetchGunVerifications,
+    fetchAllVerifications,
+    submitPassportVerification,
+    submitGunVerification,
+    clearError
+  } = useVerificationStore();
 
   useEffect(() => {
-    fetchVerificationStatus();
-  }, []);
-
-  const fetchVerificationStatus = async () => {
-    try {
-      setIsLoadingVerifications(true);
-      const token = localStorage.getItem("accessToken");
-      
-      const [passportRes, gunRes] = await Promise.all([
-        fetch("https://walletx-production.up.railway.app/api/verification/passport/me", {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        fetch("https://walletx-production.up.railway.app/api/verification/gun/me", {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-      ]);
-      
-      if (passportRes.ok) {
-        const passportData = await passportRes.json();
-        setPassportVerifications(passportData.verifications || []);
-      }
-      
-      if (gunRes.ok) {
-        const gunData = await gunRes.json();
-        setGunVerifications(gunData.verifications || []);
-      }
-    } catch (error) {
-      console.error("Error fetching verification status:", error);
-    } finally {
-      setIsLoadingVerifications(false);
-    }
-  };
+    // Fetch both passport and gun license verifications
+    fetchAllVerifications();
+  }, [fetchAllVerifications]);
 
   // Check if there are any pending or verified passport verifications
   const hasPendingOrVerifiedPassport = passportVerifications.some(
@@ -90,15 +76,15 @@ export default function VerificationPage() {
     setGunLicenseFile(null);
   };
 
-  const submitPassportVerification = async () => {
+  const handlePassportSubmission = async () => {
     if (!passportFile) {
       setPassportSubmitMessage({ type: 'error', text: 'Passport image is required' });
       return;
     }
 
     try {
-      setIsSubmittingPassport(true);
       setPassportSubmitMessage(null);
+      clearError();
       
       const formData = new FormData();
       formData.append('passportImage', passportFile);
@@ -107,50 +93,24 @@ export default function VerificationPage() {
       formData.append('fullName', document.getElementById('full-name').value);
       formData.append('dob', document.getElementById('dob').value);
       
-      const accessToken = localStorage.getItem('accessToken');
-      
-      const response = await fetch('https://walletx-production.up.railway.app/api/verification/passport', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: formData
-      });
-      
-      const contentType = response.headers.get('content-type');
-      let data;
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        const text = await response.text();
-        console.error('Received non-JSON response:', text);
-        throw new Error('Server returned an invalid response format');
-      }
-      
-      if (!response.ok) {
-        throw new Error(data?.message || 'Verification submission failed');
-      }
-      
+      await submitPassportVerification(formData);
       setPassportSubmitMessage({ type: 'success', text: 'Passport verification submitted successfully' });
       setPassportFile(null);
-      fetchVerificationStatus();
     } catch (error) {
       console.error('Error submitting passport verification:', error);
       setPassportSubmitMessage({ type: 'error', text: error.message || 'Failed to submit verification' });
-    } finally {
-      setIsSubmittingPassport(false);
     }
   };
 
-  const submitGunVerification = async () => {
+  const handleGunSubmission = async () => {
     if (!gunLicenseFile) {
       setGunSubmitMessage({ type: 'error', text: 'Gun license image is required' });
       return;
     }
 
     try {
-      setIsSubmittingGun(true);
       setGunSubmitMessage(null);
+      clearError();
       
       const formData = new FormData();
       formData.append('gunImage', gunLicenseFile);
@@ -159,42 +119,12 @@ export default function VerificationPage() {
       formData.append('issueDate', document.getElementById('issue-date').value);
       formData.append('expiryDate', document.getElementById('expiry-date').value);
       
-      const accessToken = localStorage.getItem('accessToken');
-      
-      const response = await fetch('https://walletx-production.up.railway.app/api/verification/gun', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: formData
-      });
-      
-      // Check content type before parsing as JSON
-      const contentType = response.headers.get('content-type');
-      let data;
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        // Handle non-JSON response
-        const text = await response.text();
-        console.error('Received non-JSON response:', text);
-        throw new Error('Server returned an invalid response format');
-      }
-      
-      if (!response.ok) {
-        throw new Error(data?.message || 'Verification submission failed');
-      }
-      
+      await submitGunVerification(formData);
       setGunSubmitMessage({ type: 'success', text: 'Gun license verification submitted successfully' });
-      // Clear form after successful submission
       setGunLicenseFile(null);
-      // Refresh verifications list
-      fetchVerificationStatus();
     } catch (error) {
       console.error('Error submitting gun verification:', error);
       setGunSubmitMessage({ type: 'error', text: error.message || 'Failed to submit verification' });
-    } finally {
-      setIsSubmittingGun(false);
     }
   };
 
@@ -205,14 +135,30 @@ export default function VerificationPage() {
     return date.toLocaleDateString();
   };
 
-  return (
-    <div className="space-y-8">
-      {/* Verification Progress */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <VerificationStatus />
-      </div>
+  // Show different content based on verification status
+  const renderContent = () => {
+    if (authLoading || isLoading) {
+      return (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
 
-      {/* Main Verification Form */}
+    if (isUserVerified) {
+      return (
+        <Alert className="bg-green-50 border-green-200">
+          <CheckCircle className="h-5 w-5 text-green-600" />
+          <AlertTitle className="text-green-800 font-semibold text-lg">Verification Complete</AlertTitle>
+          <AlertDescription className="text-green-700">
+            Your account is fully verified. You have access to all features and functionalities of the platform.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+
+    // Show verification forms if the user is not verified
+    return (
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="md:col-span-2">
           <CardHeader>
@@ -237,12 +183,12 @@ export default function VerificationPage() {
                   passportFile={passportFile}
                   handlePassportFileChange={handlePassportFileChange}
                   removePassportFile={removePassportFile}
-                  submitPassportVerification={submitPassportVerification}
-                  isSubmittingPassport={isSubmittingPassport}
+                  submitPassportVerification={handlePassportSubmission}
+                  isSubmittingPassport={isLoading}
                   passportSubmitMessage={passportSubmitMessage}
                   latestPassportVerification={latestPassportVerification}
                   hasPendingOrVerifiedPassport={hasPendingOrVerifiedPassport}
-                  isLoadingVerifications={isLoadingVerifications}
+                  isLoadingVerifications={isLoading}
                   formatDate={formatDate}
                 />
               </TabsContent>
@@ -252,12 +198,12 @@ export default function VerificationPage() {
                   gunLicenseFile={gunLicenseFile}
                   handleGunLicenseFileChange={handleGunLicenseFileChange}
                   removeGunLicenseFile={removeGunLicenseFile}
-                  submitGunVerification={submitGunVerification}
-                  isSubmittingGun={isSubmittingGun}
+                  submitGunVerification={handleGunSubmission}
+                  isSubmittingGun={isLoading}
                   gunSubmitMessage={gunSubmitMessage}
                   latestGunVerification={latestGunVerification}
                   hasPendingOrVerifiedGun={hasPendingOrVerifiedGun}
-                  isLoadingVerifications={isLoadingVerifications}
+                  isLoadingVerifications={isLoading}
                   formatDate={formatDate}
                 />
               </TabsContent>
@@ -276,6 +222,17 @@ export default function VerificationPage() {
           <VerificationBenefits />
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Verification Progress */}
+      <div className="grid gap-6 md:grid-cols-3">
+        <VerificationStatus isVerified={isUserVerified} />
+      </div>
+
+      {renderContent()}
     </div>
   );
 }
