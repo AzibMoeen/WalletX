@@ -134,7 +134,6 @@ const useAdminStore = create(
         
         set({ isLoading: true, error: null });
         try {
-          // Build query params
           const queryParams = new URLSearchParams();
           if (status) queryParams.append('status', status);
           if (search) queryParams.append('search', search);

@@ -285,30 +285,27 @@ export async function getDashboardStats(req, res) {
     const totalUsers = await User.countDocuments();
     
     // Get pending verifications count
-    const pendingPassportVerifications = await PassVerification.countDocuments({ status: 'pending' });
-    const pendingGunVerifications = await GunVerification.countDocuments({ status: 'pending' });
-    const pendingVerifications = pendingPassportVerifications + pendingGunVerifications;
-    
-    // Get verified users count
-    const verifiedUsers = await User.countDocuments({ verified: true });
-    
-    // Get users registered in the last 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const newUsers = await User.countDocuments({ createdAt: { $gte: thirtyDaysAgo } });
+    const [pendingGunVerifications, pendingPassportVerifications, verifiedUsers, newUsers, recentPassportVerifications, recentGunVerifications] = await Promise.all([
+      GunVerification.countDocuments({ status: 'pending' }),
+      PassVerification.countDocuments({ status: 'pending' }),
+      User.countDocuments({ verified: true }),
+      User.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
+      PassVerification.find()
+        .populate('user', 'fullname email')
+        .sort({ createdAt: -1 })
+        .limit(5),
+      GunVerification.find()
+        .populate('user', 'fullname email')
+        .sort({ createdAt: -1 })
+        .limit(5)
+    ]);
+   
+    const pendingVerifications = pendingPassportVerifications + pendingGunVerifications;
     
-    // Get recent verification requests (5 most recent)
-    const recentPassportVerifications = await PassVerification.find()
-      .populate('user', 'fullname email')
-      .sort({ createdAt: -1 })
-      .limit(5);
-      
-    const recentGunVerifications = await GunVerification.find()
-      .populate('user', 'fullname email')
-      .sort({ createdAt: -1 })
-      .limit(5);
+
     
-    // Combine and sort by date
     const recentVerifications = [...recentPassportVerifications, ...recentGunVerifications]
       .sort((a, b) => b.createdAt - a.createdAt)
       .slice(0, 5)
@@ -335,7 +332,6 @@ export async function getDashboardStats(req, res) {
   }
 }
 
-// Submit passport verification
 export async function submitPassportVerification(req, res) {
     try {
         const { passwordCnic, fullName, dob } = req.body;
@@ -356,7 +352,7 @@ export async function submitPassportVerification(req, res) {
             return res.status(404).json({ message: "User not found" });
         }
         
-        // Check if user already has a passport verification request that is pending or verified
+     
         const existingVerification = await PassVerification.findOne({ 
             user: userId,
             status: { $in: ['pending', 'verified'] }

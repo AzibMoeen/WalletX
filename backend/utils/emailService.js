@@ -58,6 +58,7 @@ export const sendEmail = async ({ email, subject, html }) => {
 
 export const sendEmailNotification = async (userId, message, subject = 'WalletX Notification', customHtml = null) => {
   try {
+    const FRONTEND_URL =  'https://wallet-x-gn6u-git-master-azibmoeens-projects.vercel.app';
     const user = await User.findById(userId);
     
     if (!user || !user.email) {
@@ -86,7 +87,7 @@ export const sendEmailNotification = async (userId, message, subject = 'WalletX 
     return await sendEmail({
       email: user.email,
       subject,
-      html: customHtml || defaultHtml
+      html:  defaultHtml
     });
   } catch (error) {
     console.error('Error sending email notification:', error);

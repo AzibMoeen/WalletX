@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { BarChart3, Check, Shield, Users, Wallet, Zap } from "lucide-react"
+import { Zap, Shield, Users, BarChart3, Check, Wallet } from "lucide-react"
 
 export default function FeaturesSection() {
   return (
