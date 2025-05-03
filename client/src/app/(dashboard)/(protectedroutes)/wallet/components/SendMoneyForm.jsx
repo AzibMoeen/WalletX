@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { SendHorizontal, Check, AlertCircle } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { SendHorizontal, Check, AlertCircle, Search, User } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,10 +26,67 @@ const SendMoneyForm = ({
   users,
   isUsersFetched,
   fetchUsers,
+  searchUsers,
   user,
   verificationStatus
 }) => {
   const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  
+  // Debounce search function
+  const debounce = useCallback((func, delay) => {
+    let timeoutId;
+    return (...args) => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        func(...args);
+      }, delay);
+    };
+  }, []);
+  
+  // Create debounced search function
+  const debouncedSearch = useCallback(
+    debounce(async (term) => {
+      if (term.length >= 2) {
+        setIsSearching(true);
+        try {
+          const results = await searchUsers(term);
+          setSearchResults(results || []);
+        } catch (err) {
+          console.error("Search error:", err);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setSearchResults([]);
+      }
+    }, 300),
+    [searchUsers]
+  );
+  
+  // Handle search input change
+  const handleSearchInputChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    debouncedSearch(value);
+  };
+  
+  // Handle user selection
+  const handleUserSelection = (selectedUser) => {
+    handleSelectChange("recipientId", selectedUser._id);
+    handleSelectChange("recipientEmail", selectedUser.email);
+    setSearchTerm(`${selectedUser.fullname} (${selectedUser.email})`);
+    setShowUserDropdown(false);
+  };
+  
+  useEffect(() => {
+    if (searchTerm.length === 0) {
+      setSearchResults([]);
+    }
+  }, [searchTerm]);
   
   return (
     <Card>
@@ -94,38 +151,47 @@ const SendMoneyForm = ({
         
         <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="recipientId" className="text-sm md:text-base">Select Recipient</Label>
-            <Select
-              value={formData.recipientId}
-              onValueChange={(value) => {
-                const selectedUser = users.find(u => u._id === value);
-                handleSelectChange("recipientId", value);
-                if (selectedUser) {
-                  handleSelectChange("recipientEmail", selectedUser.email);
-                }
-              }}
-              onOpenChange={(open) => {
-                // Fetch users only when dropdown is opened and users aren't already fetched
-                if (open && !isUsersFetched) {
-                  fetchUsers();
-                }
-              }}
-            >
-              <SelectTrigger className="h-10">
-                <SelectValue placeholder="Select a user" />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map(user => (
-                  <SelectItem key={user._id} value={user._id}>
-                    <div className="truncate max-w-[250px]">
-                      {user.fullname} ({user.email})
+            <Label htmlFor="recipientSearch" className="text-sm md:text-base">Search Recipient by Email</Label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Search className="h-4 w-4 text-gray-400" />
+              </div>
+              <Input
+                id="recipientSearch"
+                type="text"
+                placeholder="Search by email address"
+                className="pl-10 h-10"
+                value={searchTerm}
+                onChange={handleSearchInputChange}
+                onFocus={() => setShowUserDropdown(true)}
+              />
+              
+              {showUserDropdown && (searchResults.length > 0 || isSearching) && (
+                <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-y-auto">
+                  {isSearching ? (
+                    <div className="flex items-center justify-center p-4 text-sm text-gray-500">
+                      Searching...
                     </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  ) : (
+                    <ul className="py-1">
+                      {searchResults.map(user => (
+                        <li 
+                          key={user._id}
+                          className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                          onClick={() => handleUserSelection(user)}
+                        >
+                          <User className="h-4 w-4 text-gray-500" />
+                          <span className="font-medium">{user.fullname}</span>
+                          <span className="text-gray-500 text-xs">({user.email})</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
-              Select a user from the list to send money to
+              Start typing to search for users by email address
             </p>
           </div>
           
@@ -186,7 +252,7 @@ const SendMoneyForm = ({
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Recipient</span>
-                <span className="truncate max-w-[60%] text-right">{formData.recipientId || "—"}</span>
+                <span className="truncate max-w-[60%] text-right">{formData.recipientEmail || "—"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Amount</span>

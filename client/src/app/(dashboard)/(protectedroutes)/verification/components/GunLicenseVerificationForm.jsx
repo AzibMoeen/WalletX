@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import FileUploader from "./FileUploader"
+import { useForm } from "react-hook-form"
 
 const GunLicenseVerificationForm = ({
   gunLicenseFile,
@@ -17,6 +18,44 @@ const GunLicenseVerificationForm = ({
   isLoadingVerifications,
   formatDate
 }) => {
+  // Initialize React Hook Form
+  const { 
+    register, 
+    handleSubmit, 
+    formState: { errors },
+    watch
+  } = useForm({
+    defaultValues: {
+      licenseNumber: "",
+      cnic: "",
+      issueDate: "",
+      expiryDate: ""
+    },
+    mode: "onChange"
+  });
+
+  // Get today's date for validation
+  const today = new Date().toISOString().split('T')[0];
+  
+  // Watch form values for validation
+  const issueDate = watch("issueDate");
+
+  // Handle form submission
+  const onSubmit = (data) => {
+    if (!gunLicenseFile) {
+      // Show error message for missing file
+      if (typeof submitGunVerification === 'function') {
+        submitGunVerification(null, true); // Pass a flag to indicate missing file
+      }
+      return;
+    }
+    
+    // Call the parent submit handler with form data
+    if (typeof submitGunVerification === 'function') {
+      submitGunVerification(data);
+    }
+  };
+
   // Helper function to render verification status
   const renderVerificationStatus = () => {
     if (isLoadingVerifications) {
@@ -99,42 +138,103 @@ const GunLicenseVerificationForm = ({
       {renderVerificationStatus()}
       
       {showForm && (
-        <>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="license-number" className="text-base">
+              <Label htmlFor="licenseNumber" className="text-base">
                 Gun License Number
               </Label>
-              <Input id="license-number" placeholder="Enter your license number" className="h-11" />
+              <Input 
+                id="licenseNumber" 
+                className={`h-11 ${errors.licenseNumber ? "border-red-500" : ""}`}
+                {...register("licenseNumber", {
+                  required: "License number is required",
+                  pattern: {
+                    value: /^[A-Za-z0-9-]+$/,
+                    message: "Please enter a valid license number"
+                  }
+                })}
+                placeholder="Enter your license number" 
+              />
+              {errors.licenseNumber && (
+                <p className="text-xs text-red-500 mt-1">{errors.licenseNumber.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cnic-gun" className="text-base">
+              <Label htmlFor="cnic" className="text-base">
                 CNIC Number
               </Label>
-              <Input id="cnic-gun" placeholder="e.g., 12345-1234567-1" className="h-11" />
+              <Input 
+                id="cnic" 
+                className={`h-11 ${errors.cnic ? "border-red-500" : ""}`}
+                {...register("cnic", {
+                  required: "CNIC number is required",
+                  pattern: {
+                    value: /^\d{5}-\d{7}-\d{1}$/,
+                    message: "Please enter a valid CNIC number format (e.g., 12345-1234567-1)"
+                  }
+                })}
+                placeholder="e.g., 12345-1234567-1" 
+              />
+              {errors.cnic && (
+                <p className="text-xs text-red-500 mt-1">{errors.cnic.message}</p>
+              )}
             </div>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="issue-date" className="text-base">
+              <Label htmlFor="issueDate" className="text-base">
                 Issue Date
               </Label>
               <div className="relative">
-                <Input id="issue-date" type="date" className="h-11" />
+                <Input 
+                  id="issueDate" 
+                  type="date" 
+                  className={`h-11 ${errors.issueDate ? "border-red-500" : ""}`}
+                  {...register("issueDate", {
+                    required: "Issue date is required",
+                    validate: value => {
+                      const selectedDate = new Date(value);
+                      const today = new Date();
+                      return selectedDate <= today || "Issue date cannot be in the future";
+                    }
+                  })}
+                />
                 <Calendar className="absolute right-3 top-3 h-5 w-5 text-muted-foreground pointer-events-none" />
               </div>
+              {errors.issueDate && (
+                <p className="text-xs text-red-500 mt-1">{errors.issueDate.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="expiry-date" className="text-base">
+              <Label htmlFor="expiryDate" className="text-base">
                 Expiry Date
               </Label>
               <div className="relative">
-                <Input id="expiry-date" type="date" className="h-11" />
+                <Input 
+                  id="expiryDate" 
+                  type="date" 
+                  className={`h-11 ${errors.expiryDate ? "border-red-500" : ""}`}
+                  {...register("expiryDate", {
+                    required: "Expiry date is required",
+                    validate: value => {
+                      // Check that expiry date is after issue date
+                      if (issueDate) {
+                        return new Date(value) > new Date(issueDate) || 
+                               "Expiry date must be after issue date";
+                      }
+                      return true;
+                    }
+                  })}
+                />
                 <Calendar className="absolute right-3 top-3 h-5 w-5 text-muted-foreground pointer-events-none" />
               </div>
+              {errors.expiryDate && (
+                <p className="text-xs text-red-500 mt-1">{errors.expiryDate.message}</p>
+              )}
             </div>
           </div>
 
@@ -147,6 +247,10 @@ const GunLicenseVerificationForm = ({
             placeholderText="Drag and drop your license photo or"
           />
 
+          {!gunLicenseFile && (
+            <p className="text-xs text-red-500 mt-1">License photo is required</p>
+          )}
+
           {gunSubmitMessage && (
             <p
               className={`text-sm ${
@@ -158,15 +262,15 @@ const GunLicenseVerificationForm = ({
           )}
           
           <Button
+            type="submit"
             className="w-full h-11 text-base"
-            onClick={submitGunVerification}
-            disabled={isSubmittingGun}
+            disabled={isSubmittingGun || !gunLicenseFile || Object.keys(errors).length > 0}
           >
             {isSubmittingGun ? 'Submitting...' : 
              latestGunVerification?.status === 'rejected' ? 
              'Submit New Gun License Verification' : 'Submit Gun License Verification'}
           </Button>
-        </>
+        </form>
       )}
     </div>
   );

@@ -29,6 +29,7 @@ export default function WalletPage() {
     
     transferFunds,
     fetchUsers,
+    searchUsers,
     initializeWallet,
     
     getBalanceDisplay,
@@ -39,7 +40,7 @@ export default function WalletPage() {
     initializeWallet()
   }, [initializeWallet])
 
-  // Handle form input changes
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData({ [name]: value })
@@ -126,6 +127,7 @@ export default function WalletPage() {
                 users={users}
                 isUsersFetched={isUsersFetched}
                 fetchUsers={fetchUsers}
+                searchUsers={searchUsers}
                 user={userProfile}
                 verificationStatus={verificationStatus}
               />

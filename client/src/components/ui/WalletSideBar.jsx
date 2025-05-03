@@ -158,7 +158,7 @@ function WalletSidebarInner({ children }) {
             {menuItems.find((item) => item.href === pathname)?.label || "Dashboard"}
           </h1>
         </div>
-        <div className="container mx-auto max-w-6xl py-3 md:py-6 px-3 md:px-6">
+        <div className="container mx-auto max-w-6xl py-3 md:py-6 px-3 md:px-6 w-full">
           {children}
         </div>
       </div>

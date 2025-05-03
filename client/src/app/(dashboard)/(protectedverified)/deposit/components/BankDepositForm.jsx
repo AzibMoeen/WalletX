@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useForm, Controller } from "react-hook-form"
 
 const CURRENCIES = [
   { value: "USD", label: "USD ($)", symbol: "$" },
@@ -13,16 +14,33 @@ const CURRENCIES = [
 ]
 
 const BankDepositForm = ({
-  formData,
-  handleChange,
-  handleSelectChange,
-  handleSubmit,
+  handleSubmit: onSubmitHandler,
   getCurrencySymbol,
   isLoading,
   success,
   error
 }) => {
   const [copiedItem, setCopiedItem] = useState(null)
+  const referenceId = `DWALLET-${Math.floor(Math.random() * 1000000)}`
+  
+  // Initialize React Hook Form
+  const { 
+    register, 
+    control, 
+    handleSubmit, 
+    watch, 
+    formState: { errors } 
+  } = useForm({
+    defaultValues: {
+      amount: "",
+      currency: "USD",
+      transferReference: ""
+    },
+    mode: "onChange"
+  });
+  
+  const currency = watch("currency");
+  const amount = watch("amount");
   
   const copyToClipboard = (text, itemType) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -31,8 +49,17 @@ const BankDepositForm = ({
     })
   }
   
+  const onSubmit = (data) => {
+    // Convert amount to number
+    const formattedData = {
+      ...data,
+      amount: parseFloat(data.amount)
+    };
+    onSubmitHandler(formattedData);
+  };
+  
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6 mt-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-6 mt-4">
       {success && (
         <Alert className="mb-4 md:mb-6 bg-green-50 text-green-800 border-green-200">
           <Check className="h-4 w-4" />
@@ -57,35 +84,56 @@ const BankDepositForm = ({
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
             <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="text-gray-500">{getCurrencySymbol(formData.currency)}</span>
+                <span className="text-gray-500">{getCurrencySymbol(currency)}</span>
               </div>
               <Input
                 id="amount"
-                name="amount"
                 type="number"
                 placeholder="0.00"
-                className="pl-8 h-10"
-                value={formData.amount}
-                onChange={handleChange}
-                required
+                className={`pl-8 h-10 ${errors.amount ? "border-red-500" : ""}`}
+                {...register("amount", {
+                  required: "Amount is required",
+                  pattern: {
+                    value: /^\d*\.?\d+$/,
+                    message: "Please enter a valid amount"
+                  },
+                  min: {
+                    value: 0.01,
+                    message: "Amount must be greater than 0"
+                  }
+                })}
+                step="0.01"
               />
             </div>
-            <Select
-              value={formData.currency}
-              onValueChange={(value) => handleSelectChange("currency", value)}
-            >
-              <SelectTrigger className="w-full sm:w-[110px] sm:ml-2 h-10">
-                <SelectValue placeholder="Currency" />
-              </SelectTrigger>
-              <SelectContent>
-                {CURRENCIES.map(currency => (
-                  <SelectItem key={currency.value} value={currency.value}>
-                    {currency.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Controller
+              control={control}
+              name="currency"
+              rules={{ required: "Currency is required" }}
+              render={({ field }) => (
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                >
+                  <SelectTrigger className={`w-full sm:w-[110px] sm:ml-2 h-10 ${errors.currency ? "border-red-500" : ""}`}>
+                    <SelectValue placeholder="Currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map(currency => (
+                      <SelectItem key={currency.value} value={currency.value}>
+                        {currency.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
+          {errors.amount && (
+            <p className="text-xs text-red-500 mt-1">{errors.amount.message}</p>
+          )}
+          {errors.currency && (
+            <p className="text-xs text-red-500 mt-1">{errors.currency.message}</p>
+          )}
         </div>
         
         <div className="bg-muted p-3 sm:p-5 rounded-lg space-y-4 sm:space-y-5">
@@ -143,12 +191,12 @@ const BankDepositForm = ({
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Reference</Label>
               <div className="flex items-center justify-between bg-white rounded-md border p-2 sm:p-2.5">
-                <span className="text-xs sm:text-sm font-mono truncate mr-1">DWALLET-{Math.floor(Math.random() * 1000000)}</span>
+                <span className="text-xs sm:text-sm font-mono truncate mr-1">{referenceId}</span>
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   className="h-8 w-8 flex-shrink-0" 
-                  onClick={() => copyToClipboard(`DWALLET-${Math.floor(Math.random() * 1000000)}`, "reference")}
+                  onClick={() => copyToClipboard(referenceId, "reference")}
                 >
                   {copiedItem === "reference" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
@@ -161,20 +209,23 @@ const BankDepositForm = ({
           <Label htmlFor="transferReference" className="text-sm md:text-base">Transfer Reference</Label>
           <Input
             id="transferReference"
-            name="transferReference"
             placeholder="Enter the reference used in your transfer"
-            value={formData.transferReference}
-            onChange={handleChange}
-            className="h-10"
-            required
+            className={`h-10 ${errors.transferReference ? "border-red-500" : ""}`}
+            {...register("transferReference", {
+              required: "Transfer reference is required",
+              validate: value => value.includes('DWALLET-') || 'Reference should include DWALLET-'
+            })}
           />
+          {errors.transferReference && (
+            <p className="text-xs text-red-500 mt-1">{errors.transferReference.message}</p>
+          )}
           <p className="text-xs text-muted-foreground">
             This should match the reference you used when making the bank transfer
           </p>
         </div>
       </div>
       
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <Button type="submit" className="w-full" disabled={isLoading || Object.keys(errors).length > 0}>
         {isLoading ? (
           "Processing..."
         ) : (

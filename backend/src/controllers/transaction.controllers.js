@@ -346,12 +346,23 @@ export const getTransactionDetails = async (req, res) => {
 export const getAllUsersForTransfer = async (req, res) => {
   try {
     const currentUserId = req.user._id;
+    const { search } = req.query;
     
-    // Find all users except the current user
+    // Create search query
+    let query = { _id: { $ne: currentUserId } };
+    
+   
+    if (search) {
+      query.email = { $regex: search, $options: 'i' }; // Case insensitive search
+    }
+    
+    // Find users based on query
     const users = await User.find(
-      { _id: { $ne: currentUserId } },
-      'fullname email profilePicture' // Only return necessary fields
-    ).sort({ fullname: 1 }); // Sort by name for better UX
+      query,
+      'fullname email' 
+    )
+    .sort({ fullname: 1 }) // Sort by name for better UX
+    .limit(10); // Limit results to improve performance
     
     return res.status(200).json({
       users
@@ -392,7 +403,6 @@ export const requestMoney = async (req, res) => {
       return res.status(400).json({ message: "Cannot request money from yourself" });
     }
     
-    // Send notification to the target user
     const email = await sendNotification({
       userId: targetUser._id,
       subject: "Money Request",
@@ -402,7 +412,7 @@ export const requestMoney = async (req, res) => {
     console.log("Email notification sent:", email);
     
     let transaction = null;
-    if (true) { // Always create the transaction regardless of email status
+    if (true) { 
       transaction = await Transaction.create({
         user: requesterId,
         recipient: targetUser._id,
@@ -578,7 +588,7 @@ export const getMoneyRequests = async (req, res) => {
     });
   }
 };
-
+// todo - use promise.all to fetch stats in parallel
 export const getFilteredTransactionHistory = async (req, res) => {
   try {
     const userId = req.user._id;

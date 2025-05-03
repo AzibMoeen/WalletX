@@ -8,7 +8,7 @@ import {
   CardTitle 
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
 
 const TransactionsList = ({
@@ -83,16 +83,16 @@ const TransactionsList = ({
       </CardHeader>
       <CardContent className="px-4 md:px-6">
         {isLoading ? (
-          <div className="text-center py-10">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800 mb-2"></div>
+          <div className="flex flex-col items-center justify-center w-full py-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800 mb-2"></div>
             <p>Loading transactions...</p>
           </div>
         ) : filteredTransactions.length === 0 ? (
-          <div className="text-center py-10 text-muted-foreground">
+          <div className="flex flex-col items-center justify-center w-full py-10 text-muted-foreground">
             <p>No transactions found for the selected filters</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-hidden">
             {filteredTransactions.map(transaction => (
               <div 
                 key={transaction._id} 

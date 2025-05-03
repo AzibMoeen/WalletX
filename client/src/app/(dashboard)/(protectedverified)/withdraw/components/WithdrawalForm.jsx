@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
+import { useForm, FormProvider } from "react-hook-form"
 import WithdrawalMethodSelector from "./WithdrawalMethodSelector"
 import AmountForm from "./AmountForm"
 import CardDetailsForm from "./CardDetailsForm"
@@ -11,47 +12,43 @@ const WithdrawalForm = ({
   wallet,
   currencies,
   getCurrencySymbol,
-  handleSubmit,
+  handleSubmit: onSubmitHandler,
   isLoading
 }) => {
   const [withdrawalMethod, setWithdrawalMethod] = useState("card")
-  const [formData, setFormData] = useState({
-    amount: "",
-    currency: "USD",
-    description: "",
-    // Card withdrawal fields
-    cardholderName: "",
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    // Bank transfer fields
-    accountHolderName: "",
-    bankName: "",
-    accountNumber: "",
-    routingNumber: ""
-  })
+  
+  const methods = useForm({
+    defaultValues: {
+      amount: "",
+      currency: "USD",
+      description: "",
+      // Card withdrawal fields
+      cardholderName: "",
+      cardNumber: "",
+      expiryDate: "",
+      cvv: "",
+      // Bank transfer fields
+      accountHolderName: "",
+      bankName: "",
+      accountNumber: "",
+      routingNumber: ""
+    },
+    mode: "onChange"
+  });
+  
+  const { handleSubmit, formState: { errors, isValid } } = methods;
 
   const handleMethodChange = (value) => {
     setWithdrawalMethod(value)
   }
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleCurrencyChange = (value) => {
-    setFormData(prev => ({ ...prev, currency: value }))
-  }
-
-  const onSubmit = (e) => {
-    e.preventDefault()
+  const onSubmit = (data) => {
     const submissionData = {
-      ...formData,
+      ...data,
       withdrawalMethod,
-      amount: parseFloat(formData.amount)
+      amount: parseFloat(data.amount)
     }
-    handleSubmit(submissionData)
+    onSubmitHandler(submissionData)
   }
 
   return (
@@ -61,53 +58,49 @@ const WithdrawalForm = ({
         <CardDescription>Request a withdrawal from your wallet</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={onSubmit}>
-          <WithdrawalMethodSelector 
-            withdrawalMethod={withdrawalMethod}
-            handleMethodChange={handleMethodChange}
-          />
-          
-          <div className="space-y-6">
-            <AmountForm 
-              formData={formData}
-              handleChange={handleChange}
-              handleCurrencyChange={handleCurrencyChange}
-              currencies={currencies}
-              getCurrencySymbol={getCurrencySymbol}
-              wallet={wallet}
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <WithdrawalMethodSelector 
+              withdrawalMethod={withdrawalMethod}
+              handleMethodChange={handleMethodChange}
             />
             
-            {withdrawalMethod === "card" ? (
-              <CardDetailsForm 
-                formData={formData}
-                handleChange={handleChange}
-                isWithdrawalMethod={withdrawalMethod === "card"}
+            <div className="space-y-6">
+              <AmountForm 
+                currencies={currencies}
                 getCurrencySymbol={getCurrencySymbol}
+                wallet={wallet}
               />
-            ) : (
-              <BankDetailsForm
-                formData={formData}
-                handleChange={handleChange}
-                isWithdrawalMethod={withdrawalMethod === "bank"}
-                getCurrencySymbol={getCurrencySymbol}
-              />
-            )}
-            
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                "Processing..."
+              
+              {withdrawalMethod === "card" ? (
+                <CardDetailsForm 
+                  getCurrencySymbol={getCurrencySymbol}
+                />
               ) : (
-                <>
-                  <ArrowRight className="mr-2 h-4 w-4" /> Request Withdrawal
-                </>
+                <BankDetailsForm
+                  getCurrencySymbol={getCurrencySymbol}
+                />
               )}
-            </Button>
-          </div>
-        </form>
+              
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading || (!isValid && Object.keys(errors).length > 0)}
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-current"></div>
+                    <span>Processing...</span>
+                  </div>
+                ) : (
+                  <>
+                    <ArrowRight className="mr-2 h-4 w-4" /> Request Withdrawal
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </FormProvider>
       </CardContent>
     </Card>
   )

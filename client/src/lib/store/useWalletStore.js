@@ -463,9 +463,37 @@ const useWalletStore = create(
         }
       },
       
+      searchUsers: async (searchTerm) => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return null;
+        
+        try {
+          const response = await fetch(`${API_URL}/transactions/users/transfer?search=${encodeURIComponent(searchTerm)}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          
+          const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.message || 'Failed to search users');
+          }
+          
+          set({
+            users: data.users,
+            isUsersFetched: true,
+          });
+          
+          return data.users;
+        } catch (error) {
+          console.error("Error searching users:", error);
+          return [];
+        }
+      },
+      
       clearError: () => set({ error: null }),
       
-      // Utility Functions
       getCurrencySymbol: (currency) => {
         return CURRENCIES.find(c => c.value === currency)?.symbol || "";
       },
