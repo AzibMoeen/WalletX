@@ -3,6 +3,7 @@ import { PassVerification } from "../models/passportverification.model.js";
 import { GunVerification } from "../models/gunverification.model.js";
 import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 import fs from "fs";
+import { promiseHooks } from "v8";
 
 export async function getAllUsers(req, res) {
   try {
@@ -27,14 +28,14 @@ export async function getAllUsers(req, res) {
       const [field, order] = sortBy.split(':');
       sortOptions = { [field]: order === 'desc' ? -1 : 1 };
     }
-    
-    const users = await User.find(query)
+    const [users,total] = await Promise.all([User.find(query)
       .select('-password -refreshToken')
       .sort(sortOptions)
       .skip(skip)
-      .limit(parseInt(limit));
-    
-    const total = await User.countDocuments(query);
+      .limit(parseInt(limit)),
+      User.countDocuments(query)]);
+
+
     
     return res.status(200).json({
       users,
@@ -80,9 +81,14 @@ export async function deleteUser(req, res) {
     if (user.isAdmin) {
       return res.status(403).json({ message: "Cannot delete admin user" });
     }
-    
-    await PassVerification.deleteMany({ user: userId });
-    await GunVerification.deleteMany({ user: userId });
+    Promise.all([
+      PassVerification.deleteMany({ user: userId }),
+      GunVerification.deleteMany({ user: userId })
+    ]).then(() => {
+      console.log("Deleted passport and gun verifications for user:", userId);
+    }).catch((error) => {
+      console.error("Error deleting verifications:", error);
+    });
     
     await User.findByIdAndDelete(userId);
     
@@ -214,7 +220,6 @@ export async function updatePassportVerificationStatus(req, res) {
     await verification.save();
     
     if (status === 'verified') {
-      // Check if user has a verified gun verification as well
       const gunVerification = await GunVerification.findOne({
         user: verification.user,
         status: 'verified'

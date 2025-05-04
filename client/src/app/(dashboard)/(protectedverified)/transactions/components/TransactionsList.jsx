@@ -1,4 +1,4 @@
-import { DollarSign, Filter, Download, ArrowUp, ArrowDown, Clock } from "lucide-react"
+import { DollarSign, Filter, Download, ArrowUp, ArrowDown, Clock, ChevronLeft, ChevronRight } from "lucide-react"
 import { 
   Card, 
   CardContent, 
@@ -22,7 +22,9 @@ const TransactionsList = ({
   isOutgoingTransaction,
   formatDate,
   getCurrencySymbol,
-  exportTransactionsToCSV
+  exportTransactionsToCSV,
+  pagination,
+  onPageChange
 }) => {
   const router = useRouter()
   
@@ -146,6 +148,69 @@ const TransactionsList = ({
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        
+        {/* Pagination Controls */}
+        {pagination && pagination.pages > 1 && (
+          <div className="flex items-center justify-between border-t mt-4 pt-4">
+            <div className="text-sm text-muted-foreground">
+              Page {pagination.page} of {pagination.pages}
+              <span className="hidden sm:inline ml-1">
+                ({pagination.total} transactions)
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange(pagination.page - 1)}
+                disabled={pagination.page <= 1 || isLoading}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="sr-only">Previous</span>
+              </Button>
+              
+              {/* Show page numbers with truncation for larger number of pages */}
+              <div className="hidden sm:flex items-center space-x-1">
+                {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                  // Logic to decide which page numbers to show
+                  let pageNumber;
+                  if (pagination.pages <= 5) {
+                    pageNumber = i + 1;
+                  } else if (pagination.page <= 3) {
+                    pageNumber = i + 1;
+                  } else if (pagination.page >= pagination.pages - 2) {
+                    pageNumber = pagination.pages - 4 + i;
+                  } else {
+                    pageNumber = pagination.page - 2 + i;
+                  }
+                  
+                  return pageNumber > 0 && pageNumber <= pagination.pages ? (
+                    <Button
+                      key={pageNumber}
+                      variant={pagination.page === pageNumber ? "default" : "outline"}
+                      size="sm"
+                      className="w-8 h-8 p-0"
+                      onClick={() => onPageChange(pageNumber)}
+                      disabled={isLoading}
+                    >
+                      {pageNumber}
+                    </Button>
+                  ) : null;
+                })}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange(pagination.page + 1)}
+                disabled={pagination.page >= pagination.pages || isLoading}
+              >
+                <ChevronRight className="h-4 w-4" />
+                <span className="sr-only">Next</span>
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>

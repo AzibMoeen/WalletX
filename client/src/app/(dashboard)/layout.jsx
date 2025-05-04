@@ -23,12 +23,15 @@ export default function RootLayout({ children }) {
   const { fetchAllVerifications } = useVerificationStore();
 
   useEffect(() => {
-
-    fetchUser();
-    fetchBalance();
-    fetchTransactions();
-    fetchMoneyRequests();
-    fetchAllVerifications();
+    Promise.all([
+      fetchUser(),
+      fetchBalance(),
+      fetchTransactions(),
+      fetchMoneyRequests(),
+      fetchAllVerifications()
+    ]).catch(error => {
+      console.error("Error loading dashboard data:", error);
+    });
   }, [fetchUser, fetchBalance, fetchTransactions, fetchMoneyRequests, fetchAllVerifications]);
 
   return (

@@ -20,6 +20,11 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "FinWallet",
   description: "A simple wallet app",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({ children }) {

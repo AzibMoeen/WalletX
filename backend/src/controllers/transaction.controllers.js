@@ -588,7 +588,8 @@ export const getMoneyRequests = async (req, res) => {
     });
   }
 };
-// todo - use promise.all to fetch stats in parallel
+
+
 export const getFilteredTransactionHistory = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -632,38 +633,43 @@ export const getFilteredTransactionHistory = async (req, res) => {
     
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
-    const transactions = await Transaction.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit))
-      .populate('recipient', 'fullname email')
-      .populate('sender', 'fullname email');
-    
-    const total = await Transaction.countDocuments(query);
-    
-    const totalSpent = await Transaction.aggregate([
-      { 
-        $match: { 
-          user: new mongoose.Types.ObjectId(userId),
-          type: { $in: ['send', 'payment', 'withdraw'] },
-          ...(currency ? { currencyFrom: currency } : {}),
-          ...(period && query.createdAt ? { createdAt: query.createdAt } : {})
-        } 
-      },
-      { $group: { _id: '$currencyFrom', total: { $sum: '$amount' } } }
+    const [transactions, total, spentResults, receivedResults] = await Promise.all([
+      Transaction.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate('recipient', 'fullname email')
+        .populate('sender', 'fullname email'),
+      
+      Transaction.countDocuments(query),
+      
+      Transaction.aggregate([
+        { 
+          $match: { 
+            user: new mongoose.Types.ObjectId(userId),
+            type: { $in: ['send', 'payment', 'withdraw'] },
+            ...(currency ? { currencyFrom: currency } : {}),
+            ...(period && query.createdAt ? { createdAt: query.createdAt } : {})
+          } 
+        },
+        { $group: { _id: '$currencyFrom', total: { $sum: '$amount' } } }
+      ]),
+      
+      Transaction.aggregate([
+        { 
+          $match: { 
+            user: new mongoose.Types.ObjectId(userId),
+            type: { $in: ['receive', 'deposit'] },
+            ...(currency ? { currencyFrom: currency } : {}),
+            ...(period && query.createdAt ? { createdAt: query.createdAt } : {})
+          } 
+        },
+        { $group: { _id: '$currencyFrom', total: { $sum: '$amount' } } }
+      ])
     ]);
     
-    const totalReceived = await Transaction.aggregate([
-      { 
-        $match: { 
-          user: new mongoose.Types.ObjectId(userId),
-          type: { $in: ['receive', 'deposit'] },
-          ...(currency ? { currencyFrom: currency } : {}),
-          ...(period && query.createdAt ? { createdAt: query.createdAt } : {})
-        } 
-      },
-      { $group: { _id: '$currencyFrom', total: { $sum: '$amount' } } }
-    ]);
+    const totalSpent = spentResults;
+    const totalReceived = receivedResults;
     
     return res.status(200).json({
       transactions,
@@ -674,11 +680,11 @@ export const getFilteredTransactionHistory = async (req, res) => {
       pagination: {
         total,
         page: parseInt(page),
-        pages: Math.ceil(total / parseInt(limit))
+        pages: Math.ceil(total / parseInt(limit)) || 1
       }
     });
   } catch (error) {
-    console.error("Error fetching filtered transaction history:", error);
-    return res.status(500).json({ message: "Failed to fetch transaction history" });
+    console.error("Error fetching transaction history:", error);
+    return res.status(500).json({ message: "Failed to fetch transaction history", error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };

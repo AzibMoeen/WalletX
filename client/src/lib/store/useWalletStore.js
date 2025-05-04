@@ -43,6 +43,12 @@ const useWalletStore = create(
       error: null,
       success: false,
       stats: null,
+      pagination: {
+        total: 0,
+        page: 1,
+        pages: 1,
+        limit: 20
+      },
       
       setFormData: (data) => set((state) => ({
         formData: { ...state.formData, ...data }
@@ -94,15 +100,28 @@ const useWalletStore = create(
         }
       },
 
-      fetchTransactions: async (period = null) => {
+      fetchTransactions: async (period = null, page = 1, limit = 20, currency = null, type = null) => {
         const token = localStorage.getItem('accessToken');
         if (!token) return null;
         
         set({ isLoading: true, error: null });
         try {
-          const url = period 
+          // Build the base URL based on the period
+          let url = period 
             ? `${API_URL}/transactions/filtered-history?period=${period}`
             : `${API_URL}/transactions/history`;
+          
+          // Add pagination parameters
+          url += `&page=${page}&limit=${limit}`;
+          
+          // Add optional filters if provided
+          if (currency) {
+            url += `&currency=${currency}`;
+          }
+          
+          if (type) {
+            url += `&type=${type}`;
+          }
             
           const response = await fetch(url, {
             headers: {
@@ -128,6 +147,12 @@ const useWalletStore = create(
             transactions: data.transactions,
             recentRecipients: recipients,
             stats: data.stats || null,
+            pagination: data.pagination || { 
+              total: data.transactions.length, 
+              page: page, 
+              pages: Math.ceil(data.transactions.length / limit), 
+              limit: limit 
+            },
             isLoading: false,
           });
           

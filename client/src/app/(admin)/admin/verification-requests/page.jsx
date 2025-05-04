@@ -33,11 +33,15 @@ export default function VerificationRequestsPage() {
   }, []);
 
   const fetchVerificationRequests = async () => {
-    // Fetch both types of verification requests
-    await Promise.all([
-      fetchPassportVerifications(),
-      fetchGunVerifications()
-    ]);
+    try {
+      // Fetch both types of verification requests
+      await Promise.all([
+        fetchPassportVerifications(),
+        fetchGunVerifications()
+      ]);
+    } catch (error) {
+      console.error("Error fetching verification requests:", error);
+    }
   };
 
   const updateVerificationStatus = async (id, type, status) => {

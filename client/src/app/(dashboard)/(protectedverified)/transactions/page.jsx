@@ -8,15 +8,25 @@ import TransactionStatsCards from "./components/TransactionStatsCards"
 import TransactionsList from "./components/TransactionsList"
 
 export default function TransactionsPage() {
-  const { fetchTransactions, transactions, stats, isLoading, error } = useWalletStore()
+  const { fetchTransactions, transactions, stats, isLoading, error, pagination } = useWalletStore()
   
   const [period, setPeriod] = useState("all")
   const [activeCurrency, setActiveCurrency] = useState("all")
   const [activeTransactionType, setActiveTransactionType] = useState("all")
+  const [currentPage, setCurrentPage] = useState(1)
   
+  // Fetch transactions when filters change
   useEffect(() => {
-    fetchTransactions(period !== "all" ? period : null)
-  }, [fetchTransactions, period])
+    fetchTransactions(
+      period !== "all" ? period : null, 
+      1, 
+      20, 
+      activeCurrency !== "all" ? activeCurrency : null,
+      activeTransactionType !== "all" ? 
+        (activeTransactionType === "incoming" ? "receive" : "send") : null
+    )
+    setCurrentPage(1)
+  }, [fetchTransactions, period, activeCurrency, activeTransactionType])
   
   // Format currency amounts
   const formatCurrency = (amount, currency) => {
@@ -49,23 +59,20 @@ export default function TransactionsPage() {
     return new Date(dateString).toLocaleDateString(undefined, options)
   }
   
-  // Filter transactions based on selected filters
-  const filteredTransactions = transactions?.filter(tx => {
-    if (activeCurrency !== "all" && tx.currencyFrom !== activeCurrency) {
-      return false
-    }
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    if (newPage === currentPage) return
     
-    if (activeTransactionType !== "all") {
-      if (activeTransactionType === "incoming" && isOutgoingTransaction(tx.type)) {
-        return false
-      }
-      if (activeTransactionType === "outgoing" && !isOutgoingTransaction(tx.type)) {
-        return false
-      }
-    }
-    
-    return true
-  }) || []
+    setCurrentPage(newPage)
+    fetchTransactions(
+      period !== "all" ? period : null, 
+      newPage, 
+      20, 
+      activeCurrency !== "all" ? activeCurrency : null,
+      activeTransactionType !== "all" ? 
+        (activeTransactionType === "incoming" ? "receive" : "send") : null
+    )
+  }
   
   // Calculate totals for the stats section
   const getTotalSpent = () => {
@@ -90,7 +97,7 @@ export default function TransactionsPage() {
 
   // Export transactions to CSV
   const exportTransactionsToCSV = () => {
-    if (filteredTransactions.length === 0) {
+    if (transactions.length === 0) {
       toast.error("No transactions to export");
       return;
     }
@@ -108,7 +115,7 @@ export default function TransactionsPage() {
       ];
 
       // Format transaction data for CSV
-      const csvRows = filteredTransactions.map(tx => {
+      const csvRows = transactions.map(tx => {
         const sign = isOutgoingTransaction(tx.type) ? '-' : '+';
         
         // Generate description based on transaction type
@@ -188,12 +195,14 @@ export default function TransactionsPage() {
         setActiveCurrency={setActiveCurrency}
         activeTransactionType={activeTransactionType}
         setActiveTransactionType={setActiveTransactionType}
-        filteredTransactions={filteredTransactions}
+        filteredTransactions={transactions}
         isLoading={isLoading}
         isOutgoingTransaction={isOutgoingTransaction}
         formatDate={formatDate}
         getCurrencySymbol={getCurrencySymbol}
         exportTransactionsToCSV={exportTransactionsToCSV}
+        pagination={pagination}
+        onPageChange={handlePageChange}
       />
     </div>
   )

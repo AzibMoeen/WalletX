@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Menu, Wallet, X } from "lucide-react"
+import Image from "next/image"
+import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import useAuthStore from "@/lib/store/useAuthStore"
 
@@ -17,7 +18,13 @@ export default function Navbar() {
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
               <span className="sr-only">WalletX</span>
-              <Wallet className="h-8 w-8 text-purple-600" />
+              <Image 
+                src="/favicon.png"
+                alt="WalletX Logo"
+                width={32}
+                height={32}
+                className="h-8 w-8"
+              />
               <span className="ml-2 text-xl font-bold text-gray-900">WalletX</span>
             </Link>
             <div className="hidden md:block ml-10">
