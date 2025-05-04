@@ -100,7 +100,7 @@ const useWalletStore = create(
         }
       },
 
-      fetchTransactions: async (period = null, page = 1, limit = 20, currency = null, type = null) => {
+      fetchTransactions: async (period = null, page = 1, limit = 10, currency = null, type = null) => {
         const token = localStorage.getItem('accessToken');
         if (!token) return null;
         

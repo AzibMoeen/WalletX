@@ -38,7 +38,7 @@ const CardDepositForm = ({
     mode: "onChange"
   });
 
-  const currency = watch("currency");
+ const currency = watch("currency");
   const amount = watch("amount");
 
   const onSubmit = (data) => {
@@ -48,6 +48,18 @@ const CardDepositForm = ({
       amount: parseFloat(data.amount)
     };
     onSubmitHandler(formattedData);
+  };
+
+  const handleExpiryDateChange = (e) => {
+    let { value } = e.target;
+    value = value.replace(/\D/g, '');
+    
+    if (value.length > 2) {
+      value = `${value.slice(0, 2)}/${value.slice(2, 4)}`;
+    }
+    
+    // Update the input value
+    e.target.value = value;
   };
   
   return (
@@ -191,6 +203,7 @@ const CardDepositForm = ({
               })}
               placeholder="MM/YY"
               maxLength={5}
+              onInput={handleExpiryDateChange} // Add custom formatter
             />
             {errors.expiryDate && (
               <p className="text-xs text-red-500 mt-1">{errors.expiryDate.message}</p>
