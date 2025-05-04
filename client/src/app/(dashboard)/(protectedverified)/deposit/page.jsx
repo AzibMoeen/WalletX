@@ -53,8 +53,7 @@ export default function DepositPage() {
   
   const fetchRecentDeposits = async () => {
     try {
-      // This would be replaced with a real API call
-      // Simulating recent deposits for demo purposes
+ 
       setRecentDeposits([
         { method: "Card Deposit", amount: 100, currency: "USD", date: "Apr 23, 2025" },
         { method: "Bank Transfer", amount: 250, currency: "EUR", date: "Apr 20, 2025" },
@@ -81,19 +80,18 @@ export default function DepositPage() {
     setSuccess(false)
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleSubmit = async (formData) => {
+   
     setLocalLoading(true)
     setLocalError("")
     setSuccess(false)
     
     try {
-      // Validate form
+      // Validate amount
       if (!formData.amount || parseFloat(formData.amount) <= 0) {
         throw new Error("Please enter a valid amount")
       }
-      
-      // Validate card details if card deposit method selected
+    
       if (depositMethod === "card") {
         if (
           !formData.cardholderName || 
@@ -105,7 +103,7 @@ export default function DepositPage() {
         }
       }
       
-      // Validate bank details if bank deposit method selected
+     
       if (depositMethod === "bank") {
         if (!formData.transferReference) {
           throw new Error("Please enter the transfer reference")
@@ -127,18 +125,7 @@ export default function DepositPage() {
         } : undefined
       })
       
-      // Reset form
-      setFormData({
-        amount: "",
-        currency: "USD",
-        cardholderName: "",
-        cardNumber: "",
-        expiryDate: "",
-        cvv: "",
-        transferReference: ""
-      })
-      
-      // Redirect to wallet page after 2 seconds
+   
       setTimeout(() => {
         router.push("/wallet")
       }, 2000)
@@ -150,7 +137,6 @@ export default function DepositPage() {
     }
   }
 
-  // Using combined loading and error states
   const isLoading = storeLoading || localLoading
   const error = localError || storeError
 
