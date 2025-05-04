@@ -106,15 +106,13 @@ const useWalletStore = create(
         
         set({ isLoading: true, error: null });
         try {
-          // Build the base URL based on the period
           let url = period 
             ? `${API_URL}/transactions/filtered-history?period=${period}`
             : `${API_URL}/transactions/history`;
           
-          // Add pagination parameters
-          url += `&page=${page}&limit=${limit}`;
+          url += url.includes('?') ? '&' : '?';
+          url += `page=${page}&limit=${limit}`;
           
-          // Add optional filters if provided
           if (currency) {
             url += `&currency=${currency}`;
           }

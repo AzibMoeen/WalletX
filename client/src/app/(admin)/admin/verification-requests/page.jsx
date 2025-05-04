@@ -81,14 +81,14 @@ export default function VerificationRequestsPage() {
   const filteredGunRequests = getFilteredRequests(gunVerifications)
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 px-2 sm:px-4 md:px-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Verification Requests</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Verification Requests</h1>
       </div>
       
-      <Card>
+      <Card className="w-full">
         <CardHeader className="pb-3">
-          <CardTitle>Manage Verification Requests</CardTitle>
+          <CardTitle className="text-lg sm:text-xl">Manage Verification Requests</CardTitle>
           <CardDescription>
             Review and process identity verification requests from users.
           </CardDescription>
@@ -101,10 +101,10 @@ export default function VerificationRequestsPage() {
           />
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="passport" className="flex-1">Passport Verifications</TabsTrigger>
-              <TabsTrigger value="gun" className="flex-1">Gun License Verifications</TabsTrigger>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="mb-4 w-full max-w-[400px] mx-auto">
+              <TabsTrigger value="passport" className="px-2 sm:px-4">Passport</TabsTrigger>
+              <TabsTrigger value="gun" className="px-2 sm:px-4">Gun License</TabsTrigger>
             </TabsList>
             
             <TabsContent value="passport">
