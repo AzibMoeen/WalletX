@@ -63,18 +63,10 @@ export default function HeroSection() {
                   src="/image.png" 
                   alt="WalletX Dashboard Preview"
                   fill
-                  className="object-cover"
                   priority
                 />
                 
-                {/* Overlay with text and icon */}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                  <div className="text-center text-white">
-                    <Wallet className="w-16 h-16 mx-auto mb-4" />
-                    <h3 className="text-2xl font-bold">WalletX Dashboard Preview</h3>
-                    <p className="text-purple-100">Sign up to experience the full platform</p>
-                  </div>
-                </div>
+          
               </div>
             </div>
           </motion.div>
