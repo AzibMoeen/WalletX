@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { API_BASE_URL } from '../config';
+
+const API_URL = `${API_BASE_URL}/api`;
 
 const useVerificationStore = create(
   persist(
@@ -15,7 +18,7 @@ const useVerificationStore = create(
         
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch('https://walletx-production.up.railway.app/api/verification/passport/me', {
+          const response = await fetch(`${API_URL}/verification/passport/me`, {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
@@ -48,7 +51,7 @@ const useVerificationStore = create(
         
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch('https://walletx-production.up.railway.app/api/verification/gun/me', {
+          const response = await fetch(`${API_URL}/verification/gun/me`, {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
@@ -81,7 +84,7 @@ const useVerificationStore = create(
         
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch('https://walletx-production.up.railway.app/api/verification/passport', {
+          const response = await fetch(`${API_URL}/verification/passport`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -89,7 +92,6 @@ const useVerificationStore = create(
             body: formData,
           });
           
-          // Check content type before parsing as JSON
           const contentType = response.headers.get('content-type');
           let data;
           if (contentType && contentType.includes('application/json')) {
@@ -126,7 +128,7 @@ const useVerificationStore = create(
         
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch('https://walletx-production.up.railway.app/api/verification/gun', {
+          const response = await fetch(`${API_URL}/verification/gun`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
