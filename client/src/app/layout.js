@@ -2,7 +2,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
-// Load fonts with consistent cache identifiers to prevent hydration issues
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

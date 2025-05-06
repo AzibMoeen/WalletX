@@ -100,7 +100,8 @@ const useWalletStore = create(
         }
       },
 
-      fetchTransactions: async (period = null, page = 1, limit = 10, currency = null, type = null) => {
+      fetchTransactions: async (period = null, page = 1, currency = null, type = null) => {
+        let limit = 10;
         const token = localStorage.getItem('accessToken');
         if (!token) return null;
         
@@ -566,7 +567,6 @@ const useWalletStore = create(
         });
       },
       
-      // Initialize wallet data
       initializeWallet: async () => {
         await get().fetchUserProfile();
         await get().fetchBalance();

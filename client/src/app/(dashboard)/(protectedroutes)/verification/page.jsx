@@ -42,17 +42,14 @@ export default function VerificationPage() {
     fetchAllVerifications();
   }, [fetchAllVerifications]);
 
-  // Check if there are any pending or verified passport verifications
   const hasPendingOrVerifiedPassport = passportVerifications.some(
     v => v.status === 'pending' || v.status === 'verified'
   );
   
-  // Check if there are any pending or verified gun verifications
   const hasPendingOrVerifiedGun = gunVerifications.some(
     v => v.status === 'pending' || v.status === 'verified'
   );
   
-  // Get the most recent verification of each type
   const latestPassportVerification = passportVerifications.length > 0 ? passportVerifications[0] : null;
   const latestGunVerification = gunVerifications.length > 0 ? gunVerifications[0] : null;
 
@@ -88,9 +85,9 @@ export default function VerificationPage() {
       
       const formData = new FormData();
       formData.append('passportImage', passportFile);
-      formData.append('passportNumber', document.getElementById('passport-number').value);
+      formData.append('passportNumber', document.getElementById('passportNumber').value);
       formData.append('passwordCnic', document.getElementById('cnic').value);
-      formData.append('fullName', document.getElementById('full-name').value);
+      formData.append('fullName', document.getElementById('fullName').value);
       formData.append('dob', document.getElementById('dob').value);
       
       await submitPassportVerification(formData);
@@ -114,10 +111,10 @@ export default function VerificationPage() {
       
       const formData = new FormData();
       formData.append('gunImage', gunLicenseFile);
-      formData.append('licenseNumber', document.getElementById('license-number').value);
-      formData.append('cnic', document.getElementById('cnic-gun').value);
-      formData.append('issueDate', document.getElementById('issue-date').value);
-      formData.append('expiryDate', document.getElementById('expiry-date').value);
+      formData.append('licenseNumber', document.getElementById('licenseNumber').value);
+      formData.append('cnic', document.getElementById('cnic').value);
+      formData.append('issueDate', document.getElementById('issueDate').value);
+      formData.append('expiryDate', document.getElementById('expiryDate').value);
       
       await submitGunVerification(formData);
       setGunSubmitMessage({ type: 'success', text: 'Gun license verification submitted successfully' });

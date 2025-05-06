@@ -40,8 +40,6 @@ export default function WithdrawPage() {
   }, [fetchBalance])
   
   const fetchWithdrawalHistory = () => {
-    // This would normally fetch from the API
-    // For demo purposes, we're using mock data
     setWithdrawalHistory([
       { 
         amount: 150,

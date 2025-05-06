@@ -19,7 +19,6 @@ const PassportVerificationForm = ({
   isLoadingVerifications,
   formatDate
 }) => {
-  // Initialize React Hook Form
   const { 
     register, 
     handleSubmit, 
@@ -39,12 +38,11 @@ const PassportVerificationForm = ({
     if (!passportFile) {
       // Show error message for missing file
       if (typeof submitPassportVerification === 'function') {
-        submitPassportVerification(null, true); // Pass a flag to indicate missing file
+        submitPassportVerification(null, true); 
       }
       return;
     }
     
-    // Call the parent submit handler with form data
     if (typeof submitPassportVerification === 'function') {
       submitPassportVerification(data);
     }

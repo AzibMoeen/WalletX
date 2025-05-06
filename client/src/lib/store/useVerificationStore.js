@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 
 const useVerificationStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       passportVerifications: [],
       gunVerifications: [],
       isLoading: false,
@@ -106,7 +106,7 @@ const useVerificationStore = create(
           }
           
           // Fetch updated verifications
-          await set.fetchPassportVerifications();
+          await get().fetchPassportVerifications();
           
           set({ isLoading: false });
           return data;
@@ -151,7 +151,7 @@ const useVerificationStore = create(
           }
           
           // Fetch updated verifications
-          await set.fetchGunVerifications();
+          await get().fetchGunVerifications();
           
           set({ isLoading: false });
           return data;
@@ -170,8 +170,8 @@ const useVerificationStore = create(
         
         try {
           await Promise.all([
-            set.fetchPassportVerifications(),
-            set.fetchGunVerifications()
+            get().fetchPassportVerifications(),
+            get().fetchGunVerifications()
           ]);
         } catch (error) {
           set({ error: error.message });
