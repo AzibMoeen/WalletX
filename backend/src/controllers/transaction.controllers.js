@@ -4,7 +4,6 @@ import { Wallet } from "../models/wallet.model.js";
 import { User } from "../models/user.model.js";
 import { sendNotification } from '../../utils/emailService.js';
 
-// Helper function to get or create a wallet for a user
 const getOrCreateWallet = async (userId) => {
   let wallet = await Wallet.findOne({ user: userId });
   if (!wallet) {

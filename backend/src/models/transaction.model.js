@@ -8,7 +8,6 @@ const transactionSchema = new mongoose.Schema({
     required: true 
   },
   
-  // For transfer transactions
   recipient: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User'
