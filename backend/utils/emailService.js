@@ -58,7 +58,7 @@ export const sendEmail = async ({ email, subject, html }) => {
 
 export const sendEmailNotification = async (userId, message, subject = 'WalletX Notification', customHtml = null) => {
   try {
-    const FRONTEND_URL =  'https://wallet-x-gn6u-git-master-azibmoeens-projects.vercel.app';
+    const FRONTEND_URL =  'https://wallet-x-three.vercel.app/request';
     const user = await User.findById(userId);
     
     if (!user || !user.email) {

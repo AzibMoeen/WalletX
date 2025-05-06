@@ -15,7 +15,6 @@ const startServer = () => {
   });
 };
 
-// Initialize app - connect to DB then start server
 connectDB()
   .then(() => {
     startServer();
@@ -24,7 +23,7 @@ connectDB()
     console.error("MongoDB connection failed:", err);
   });
 
-  
+
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (error) => {
   console.error("Unhandled Rejection:", error);
