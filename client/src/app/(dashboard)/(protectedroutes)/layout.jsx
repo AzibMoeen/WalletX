@@ -1,5 +1,5 @@
 import React from 'react'
-import ProtectedRoute from '@/components/VerificationGuard'
+import ProtectedRoute from '@/components/auth/VerificationGuard'
 
 const Layout = ({children}) => {
 

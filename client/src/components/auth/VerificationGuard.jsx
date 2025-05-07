@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-import useAuthStore from '@/lib/store/useAuthStore';
-import { toast } from 'sonner';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import useAuthStore from "@/lib/store/useAuthStore";
+import { toast } from "sonner";
 
-const ProtectedRoute = ({ children, requireVerification = false ,isAdmin = false}) => {
+const ProtectedRoute = ({
+  children,
+  requireVerification = false,
+  isAdmin = false,
+}) => {
   const router = useRouter();
   const { user, isAuthenticated, fetchUser, isLoading } = useAuthStore();
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -20,11 +24,11 @@ const ProtectedRoute = ({ children, requireVerification = false ,isAdmin = false
           await fetchUser();
         }
 
-        const currentUser = user || useAuthStore.getState().user; 
+        const currentUser = user || useAuthStore.getState().user;
 
         if (!isAuthenticated || !currentUser) {
           if (isMounted) {
-            router.push('/login');
+            router.push("/login");
           }
           return;
         }
@@ -32,24 +36,23 @@ const ProtectedRoute = ({ children, requireVerification = false ,isAdmin = false
         if (requireVerification && !currentUser.verified) {
           if (isMounted) {
             toast.success("Please verify your account to access this page.");
-            router.replace('/verification');
+            router.replace("/verification");
           }
           return;
         }
         if (isAdmin && !currentUser.isAdmin) {
           if (isMounted) {
             toast.error("You do not have permission to access this page.");
-            router.push('/login');
+            router.push("/login");
           }
           return;
         }
         if (isMounted) {
           setCheckingAuth(false);
         }
-
       } catch (error) {
         console.error("Authentication check failed:", error);
-        router.replace('/login');
+        router.replace("/login");
       } finally {
         if (isMounted) {
           setCheckingAuth(false);

@@ -1,15 +1,8 @@
-import React from 'react'
-import ProtectedRoute from '@/components/VerificationGuard'
+import React from "react";
+import ProtectedRoute from "@/components/auth/VerificationGuard";
 
-const layout = ({children}) => {
- 
-  return (
+const layout = ({ children }) => {
+  return <ProtectedRoute requireVerification={true}>{children}</ProtectedRoute>;
+};
 
-        <ProtectedRoute requireVerification={true}>
-      {children}
-      </ProtectedRoute>
- 
-  )
-}
-
-export default layout
+export default layout;

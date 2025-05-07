@@ -1,5 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import ProtectedRoute from "@/components/VerificationGuard";
+import ProtectedRoute from "@/components/auth/VerificationGuard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -11,15 +11,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-
 import AdminSideBar from "@/components/ui/AdminSideBar";
 
 export default function RootLayout({ children }) {
   return (
-        <ProtectedRoute isAdmin={true}>
-        <AdminSideBar>
-          {children}
-        </AdminSideBar>
-        </ProtectedRoute>
+    <ProtectedRoute isAdmin={true}>
+      <AdminSideBar>{children}</AdminSideBar>
+    </ProtectedRoute>
   );
 }
