@@ -1,29 +1,48 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { ArrowRight, Plus } from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Plus } from "lucide-react";
 
-const BalanceCard = ({ wallet, getBalanceDisplay, router, buttonAction = "deposit" }) => {
+const BalanceCard = ({
+  wallet,
+  getBalanceDisplay,
+  router,
+  buttonAction = "deposit",
+}) => {
   const handleButtonClick = () => {
     if (buttonAction === "deposit") {
-      router.push("/deposit")
+      router.push("/deposit");
     } else if (buttonAction === "withdraw") {
-      router.push("/request")
+      router.push("/request");
     }
-  }
+  };
 
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle>Wallet Balance</CardTitle>
-        <CardDescription>Your current balance across all currencies</CardDescription>
+        <CardDescription>
+          Your current balance across all currencies
+        </CardDescription>
       </CardHeader>
       <CardContent className="pb-2">
         <div className="space-y-2">
           {wallet.balances && wallet.balances.length > 0 ? (
             wallet.balances.map((balance, index) => (
-              <div key={index} className="flex justify-between items-center p-2 rounded-lg border">
+              <div
+                key={index}
+                className="flex justify-between items-center p-2 rounded-lg border"
+              >
                 <span className="font-medium">{balance.currency}</span>
-                <span className="text-sm">{getBalanceDisplay(balance.currency)}</span>
+                <span className="text-sm">
+                  {getBalanceDisplay(balance.currency)}
+                </span>
               </div>
             ))
           ) : (
@@ -34,9 +53,9 @@ const BalanceCard = ({ wallet, getBalanceDisplay, router, buttonAction = "deposi
         </div>
       </CardContent>
       <CardFooter>
-        <Button 
-          variant="outline" 
-          className="w-full" 
+        <Button
+          variant="outline"
+          className="w-full"
           onClick={handleButtonClick}
         >
           {buttonAction === "deposit" ? (
@@ -51,7 +70,7 @@ const BalanceCard = ({ wallet, getBalanceDisplay, router, buttonAction = "deposi
         </Button>
       </CardFooter>
     </Card>
-  )
-}
+  );
+};
 
-export default BalanceCard
+export default BalanceCard;

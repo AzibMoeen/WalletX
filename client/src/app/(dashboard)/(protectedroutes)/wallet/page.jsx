@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BalanceCard from "./components/BalanceCard";
@@ -8,9 +8,16 @@ import RecentRecipients from "./components/RecentRecipients";
 import SendMoneyForm from "./components/SendMoneyForm";
 import ReceiveMoneyCard from "./components/ReceiveMoneyCard";
 import useWalletStore from "@/lib/store/useWalletStore";
+import {
+  BalanceCardSkeleton,
+  RecentRecipientsSkeleton,
+  SendMoneyFormSkeleton,
+  ReceiveMoneyCardSkeleton,
+} from "./components/SkeletonComponents";
 
 export default function WalletPage() {
   const router = useRouter();
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   const {
     wallet,
@@ -37,7 +44,11 @@ export default function WalletPage() {
   } = useWalletStore();
 
   useEffect(() => {
-    initializeWallet();
+    const loadData = async () => {
+      await initializeWallet();
+      setIsDataLoaded(true);
+    };
+    loadData();
   }, [initializeWallet]);
 
   const handleChange = (e) => {
@@ -102,56 +113,74 @@ export default function WalletPage() {
         <TabsList className="grid w-full grid-cols-2 mb-4 md:mb-6">
           <TabsTrigger value="send">Send Money</TabsTrigger>
           <TabsTrigger value="receive">Receive Money</TabsTrigger>
-        </TabsList>
-
+        </TabsList>{" "}
         <TabsContent value="send">
           <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-12">
             <div className="md:col-span-4 space-y-4">
-              <BalanceCard
-                wallet={wallet}
-                getBalanceDisplay={getBalanceDisplay}
-                buttonAction="deposit"
-              />
-
-              <RecentRecipients />
+              {!isDataLoaded ? (
+                <>
+                  <BalanceCardSkeleton />
+                  <RecentRecipientsSkeleton />
+                </>
+              ) : (
+                <>
+                  <BalanceCard
+                    wallet={wallet}
+                    getBalanceDisplay={getBalanceDisplay}
+                    buttonAction="deposit"
+                  />
+                  <RecentRecipients />
+                </>
+              )}
             </div>
 
             {/* Send Money Form */}
             <div className="md:col-span-8">
-              <SendMoneyForm
-                formData={formData}
-                handleChange={handleChange}
-                handleSelectChange={handleSelectChange}
-                handleSubmit={handleSubmit}
-                getCurrencySymbol={getCurrencySymbol}
-                isLoading={isLoading}
-                success={success}
-                error={error}
-                users={users}
-                isUsersFetched={isUsersFetched}
-                fetchUsers={fetchUsers}
-                searchUsers={searchUsers}
-                user={userProfile}
-                verificationStatus={verificationStatus}
-              />
+              {!isDataLoaded ? (
+                <SendMoneyFormSkeleton />
+              ) : (
+                <SendMoneyForm
+                  formData={formData}
+                  handleChange={handleChange}
+                  handleSelectChange={handleSelectChange}
+                  handleSubmit={handleSubmit}
+                  getCurrencySymbol={getCurrencySymbol}
+                  isLoading={isLoading}
+                  success={success}
+                  error={error}
+                  users={users}
+                  isUsersFetched={isUsersFetched}
+                  fetchUsers={fetchUsers}
+                  searchUsers={searchUsers}
+                  user={userProfile}
+                  verificationStatus={verificationStatus}
+                />
+              )}
             </div>
           </div>
         </TabsContent>
-
         <TabsContent value="receive">
           <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-12">
             {/* Balance Cards */}
             <div className="md:col-span-4 space-y-4">
-              <BalanceCard
-                wallet={wallet}
-                getBalanceDisplay={getBalanceDisplay}
-                buttonAction="transactions"
-              />
+              {!isDataLoaded ? (
+                <BalanceCardSkeleton />
+              ) : (
+                <BalanceCard
+                  wallet={wallet}
+                  getBalanceDisplay={getBalanceDisplay}
+                  buttonAction="transactions"
+                />
+              )}
             </div>
 
             {/* Receive Money */}
             <div className="md:col-span-8">
-              <ReceiveMoneyCard wallet={wallet} user={userProfile} />
+              {!isDataLoaded ? (
+                <ReceiveMoneyCardSkeleton />
+              ) : (
+                <ReceiveMoneyCard wallet={wallet} user={userProfile} />
+              )}
             </div>
           </div>
         </TabsContent>

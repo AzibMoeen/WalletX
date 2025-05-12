@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { Search, RefreshCcw } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Search, RefreshCcw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export function UserSearchBar({ searchQuery, setSearchQuery, fetchUsers }) {
   return (
@@ -17,9 +17,14 @@ export function UserSearchBar({ searchQuery, setSearchQuery, fetchUsers }) {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-      <Button variant="outline" size="icon" onClick={fetchUsers}>
+      <Button
+        className="cursor-pointer"
+        variant="outline"
+        size="icon"
+        onClick={fetchUsers}
+      >
         <RefreshCcw className="h-4 w-4" />
       </Button>
     </div>
-  )
+  );
 }

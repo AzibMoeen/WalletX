@@ -10,6 +10,7 @@ const useAuthStore = create(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      verificationEmail: null, // Track email being verified
 
       login: async (credentials) => {
         set({ isLoading: true, error: null });
@@ -67,6 +68,78 @@ const useAuthStore = create(
 
           set({
             isLoading: false,
+          });
+
+          return data;
+        } catch (error) {
+          set({
+            isLoading: false,
+            error: error.message,
+          });
+          throw error;
+        }
+      },
+
+      sendVerificationEmail: async (userData) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}/api/auth/email-verification`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(userData),
+            }
+          );
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(
+              data.message || "Failed to send verification email"
+            );
+          }
+
+          set({
+            isLoading: false,
+            verificationEmail: userData.email,
+          });
+
+          return data;
+        } catch (error) {
+          set({
+            isLoading: false,
+            error: error.message,
+          });
+          throw error;
+        }
+      },
+
+      verifyAndRegister: async (verificationData) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}/api/auth/verify-and-register`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(verificationData),
+            }
+          );
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message || "Verification failed");
+          }
+
+          set({
+            isLoading: false,
+            verificationEmail: null,
           });
 
           return data;
@@ -146,6 +219,13 @@ const useAuthStore = create(
       },
 
       clearError: () => set({ error: null }),
+
+      // Set user data (used for updates)
+      setUser: (userData) => {
+        set({
+          user: userData,
+        });
+      },
     }),
     {
       name: "auth-storage",
@@ -153,6 +233,7 @@ const useAuthStore = create(
         user: state.user,
         accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
+        verificationEmail: state.verificationEmail,
       }),
     }
   )

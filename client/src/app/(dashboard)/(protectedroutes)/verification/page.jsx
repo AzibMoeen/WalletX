@@ -2,7 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle } from "lucide-react";
 import useVerificationStore from "@/lib/store/useVerificationStore";
@@ -13,6 +20,7 @@ import PassportVerificationForm from "./components/PassportVerificationForm";
 import GunLicenseVerificationForm from "./components/GunLicenseVerificationForm";
 import VerificationGuidelines from "./components/VerificationGuidelines";
 import VerificationBenefits from "./components/VerificationBenefits";
+import { Loader } from "lucide-react";
 
 export default function VerificationPage() {
   const [activeTab, setActiveTab] = useState("passport");
@@ -20,21 +28,21 @@ export default function VerificationPage() {
   const [gunLicenseFile, setGunLicenseFile] = useState(null);
   const [passportSubmitMessage, setPassportSubmitMessage] = useState(null);
   const [gunSubmitMessage, setGunSubmitMessage] = useState(null);
-  
+
   const { user, isLoading: authLoading } = useAuthStore();
   const isUserVerified = user?.verified === true;
-  
-  const { 
-    passportVerifications, 
-    gunVerifications, 
-    isLoading, 
-    error, 
-    fetchPassportVerifications, 
+
+  const {
+    passportVerifications,
+    gunVerifications,
+    isLoading,
+    error,
+    fetchPassportVerifications,
     fetchGunVerifications,
     fetchAllVerifications,
     submitPassportVerification,
     submitGunVerification,
-    clearError
+    clearError,
   } = useVerificationStore();
 
   useEffect(() => {
@@ -43,15 +51,17 @@ export default function VerificationPage() {
   }, [fetchAllVerifications]);
 
   const hasPendingOrVerifiedPassport = passportVerifications.some(
-    v => v.status === 'pending' || v.status === 'verified'
+    (v) => v.status === "pending" || v.status === "verified"
   );
-  
+
   const hasPendingOrVerifiedGun = gunVerifications.some(
-    v => v.status === 'pending' || v.status === 'verified'
+    (v) => v.status === "pending" || v.status === "verified"
   );
-  
-  const latestPassportVerification = passportVerifications.length > 0 ? passportVerifications[0] : null;
-  const latestGunVerification = gunVerifications.length > 0 ? gunVerifications[0] : null;
+
+  const latestPassportVerification =
+    passportVerifications.length > 0 ? passportVerifications[0] : null;
+  const latestGunVerification =
+    gunVerifications.length > 0 ? gunVerifications[0] : null;
 
   const handlePassportFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -75,57 +85,83 @@ export default function VerificationPage() {
 
   const handlePassportSubmission = async () => {
     if (!passportFile) {
-      setPassportSubmitMessage({ type: 'error', text: 'Passport image is required' });
+      setPassportSubmitMessage({
+        type: "error",
+        text: "Passport image is required",
+      });
       return;
     }
 
     try {
       setPassportSubmitMessage(null);
       clearError();
-      
+
       const formData = new FormData();
-      formData.append('passportImage', passportFile);
-      formData.append('passportNumber', document.getElementById('passportNumber').value);
-      formData.append('passwordCnic', document.getElementById('cnic').value);
-      formData.append('fullName', document.getElementById('fullName').value);
-      formData.append('dob', document.getElementById('dob').value);
-      
+      formData.append("passportImage", passportFile);
+      formData.append(
+        "passportNumber",
+        document.getElementById("passportNumber").value
+      );
+      formData.append("passwordCnic", document.getElementById("cnic").value);
+      formData.append("fullName", document.getElementById("fullName").value);
+      formData.append("dob", document.getElementById("dob").value);
+
       await submitPassportVerification(formData);
-      setPassportSubmitMessage({ type: 'success', text: 'Passport verification submitted successfully' });
+      setPassportSubmitMessage({
+        type: "success",
+        text: "Passport verification submitted successfully",
+      });
       setPassportFile(null);
     } catch (error) {
-      console.error('Error submitting passport verification:', error);
-      setPassportSubmitMessage({ type: 'error', text: error.message || 'Failed to submit verification' });
+      console.error("Error submitting passport verification:", error);
+      setPassportSubmitMessage({
+        type: "error",
+        text: error.message || "Failed to submit verification",
+      });
     }
   };
 
   const handleGunSubmission = async () => {
     if (!gunLicenseFile) {
-      setGunSubmitMessage({ type: 'error', text: 'Gun license image is required' });
+      setGunSubmitMessage({
+        type: "error",
+        text: "Gun license image is required",
+      });
       return;
     }
 
     try {
       setGunSubmitMessage(null);
       clearError();
-      
+
       const formData = new FormData();
-      formData.append('gunImage', gunLicenseFile);
-      formData.append('licenseNumber', document.getElementById('licenseNumber').value);
-      formData.append('cnic', document.getElementById('cnic').value);
-      formData.append('issueDate', document.getElementById('issueDate').value);
-      formData.append('expiryDate', document.getElementById('expiryDate').value);
-      
+      formData.append("gunImage", gunLicenseFile);
+      formData.append(
+        "licenseNumber",
+        document.getElementById("licenseNumber").value
+      );
+      formData.append("cnic", document.getElementById("gunCnic").value);
+      formData.append("issueDate", document.getElementById("issueDate").value);
+      formData.append(
+        "expiryDate",
+        document.getElementById("expiryDate").value
+      );
+
       await submitGunVerification(formData);
-      setGunSubmitMessage({ type: 'success', text: 'Gun license verification submitted successfully' });
+      setGunSubmitMessage({
+        type: "success",
+        text: "Gun license verification submitted successfully",
+      });
       setGunLicenseFile(null);
     } catch (error) {
-      console.error('Error submitting gun verification:', error);
-      setGunSubmitMessage({ type: 'error', text: error.message || 'Failed to submit verification' });
+      console.error("Error submitting gun verification:", error);
+      setGunSubmitMessage({
+        type: "error",
+        text: error.message || "Failed to submit verification",
+      });
     }
   };
 
-  // Helper function to format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -137,7 +173,7 @@ export default function VerificationPage() {
     if (authLoading || isLoading) {
       return (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+          <Loader className="h-10 w-10 text-primary animate-spin" />
         </div>
       );
     }
@@ -146,9 +182,12 @@ export default function VerificationPage() {
       return (
         <Alert className="bg-green-50 border-green-200">
           <CheckCircle className="h-5 w-5 text-green-600" />
-          <AlertTitle className="text-green-800 font-semibold text-lg">Verification Complete</AlertTitle>
+          <AlertTitle className="text-green-800 font-semibold text-lg">
+            Verification Complete
+          </AlertTitle>
           <AlertDescription className="text-green-700">
-            Your account is fully verified. You have access to all features and functionalities of the platform.
+            Your account is fully verified. You have access to all features and
+            functionalities of the platform.
           </AlertDescription>
         </Alert>
       );
@@ -157,20 +196,33 @@ export default function VerificationPage() {
     // Show verification forms if the user is not verified
     return (
       <div className="grid gap-6 md:grid-cols-3">
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Identity Verification</CardTitle>
+        <Card className="md:col-span-2 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl font-semibold">
+              Identity Verification
+            </CardTitle>
             <CardDescription>
-              Please verify your identity by providing either passport or gun license details
+              Please verify your identity by providing either passport or gun
+              license details
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-8">
-                <TabsTrigger value="passport" className="text-base py-3">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100 rounded-md h-10 p-0">
+                <TabsTrigger
+                  value="passport"
+                  className="text-sm font-medium text-blue-600 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-colors"
+                >
                   Passport Verification
                 </TabsTrigger>
-                <TabsTrigger value="gun" className="text-base py-3">
+                <TabsTrigger
+                  value="gun"
+                  className="text-sm font-medium text-blue-600 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-colors"
+                >
                   Gun License Verification
                 </TabsTrigger>
               </TabsList>
@@ -206,26 +258,26 @@ export default function VerificationPage() {
               </TabsContent>
             </Tabs>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
+          <CardFooter className="flex flex-col gap-4 pt-0 border-t border-gray-100">
             <p className="text-xs text-center text-muted-foreground">
-              By submitting, you confirm that all provided information is accurate and authentic.
+              By submitting, you confirm that all provided information is
+              accurate and authentic.
             </p>
           </CardFooter>
         </Card>
 
-        {/* Sidebar with verification info */}
         <div className="space-y-6">
           <VerificationGuidelines />
           <VerificationBenefits />
         </div>
       </div>
     );
-  }
+  };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-7xl mx-auto px-4 py-6">
       {/* Verification Progress */}
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6">
         <VerificationStatus isVerified={isUserVerified} />
       </div>
 

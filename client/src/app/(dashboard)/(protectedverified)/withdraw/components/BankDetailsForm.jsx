@@ -1,11 +1,13 @@
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useFormContext } from "react-hook-form"
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useFormContext } from "react-hook-form";
 
-const BankDetailsForm = ({
-  getCurrencySymbol
-}) => {
-  const { register, formState: { errors }, watch } = useFormContext();
+const BankDetailsForm = ({ getCurrencySymbol }) => {
+  const {
+    register,
+    formState: { errors },
+    watch,
+  } = useFormContext();
   const amount = watch("amount");
   const currency = watch("currency");
 
@@ -18,14 +20,16 @@ const BankDetailsForm = ({
           placeholder="John Doe"
           className={errors.accountHolderName ? "border-red-500" : ""}
           {...register("accountHolderName", {
-            required: "Account holder name is required"
+            required: "Account holder name is required",
           })}
         />
         {errors.accountHolderName && (
-          <p className="text-xs text-red-500 mt-1">{errors.accountHolderName.message}</p>
+          <p className="text-xs text-red-500 mt-1">
+            {errors.accountHolderName.message}
+          </p>
         )}
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="bankName">Bank Name</Label>
         <Input
@@ -33,14 +37,14 @@ const BankDetailsForm = ({
           placeholder="Bank Name"
           className={errors.bankName ? "border-red-500" : ""}
           {...register("bankName", {
-            required: "Bank name is required"
+            required: "Bank name is required",
           })}
         />
         {errors.bankName && (
           <p className="text-xs text-red-500 mt-1">{errors.bankName.message}</p>
         )}
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="accountNumber">Account Number</Label>
         <Input
@@ -51,15 +55,17 @@ const BankDetailsForm = ({
             required: "Account number is required",
             pattern: {
               value: /^[0-9]{8,17}$/,
-              message: "Please enter a valid account number"
-            }
+              message: "Please enter a valid account number",
+            },
           })}
         />
         {errors.accountNumber && (
-          <p className="text-xs text-red-500 mt-1">{errors.accountNumber.message}</p>
+          <p className="text-xs text-red-500 mt-1">
+            {errors.accountNumber.message}
+          </p>
         )}
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="routingNumber">Routing/Swift Number</Label>
         <Input
@@ -70,25 +76,28 @@ const BankDetailsForm = ({
             required: "Routing/Swift number is required",
             pattern: {
               value: /^[0-9A-Z]{8,11}$/,
-              message: "Please enter a valid routing or SWIFT code"
-            }
+              message: "Please enter a valid routing or SWIFT code",
+            },
           })}
         />
         {errors.routingNumber && (
-          <p className="text-xs text-red-500 mt-1">{errors.routingNumber.message}</p>
+          <p className="text-xs text-red-500 mt-1">
+            {errors.routingNumber.message}
+          </p>
         )}
       </div>
-      
+
       <div className="bg-muted p-4 rounded-lg">
         <div className="text-sm font-medium mb-2">Bank Transfer Details</div>
         <div className="space-y-1 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Amount</span>
             <span>
-              {amount ? 
-                `${getCurrencySymbol(currency)}${parseFloat(amount).toFixed(2)} ${currency}` : 
-                "—"
-              }
+              {amount
+                ? `${getCurrencySymbol(currency)}${parseFloat(amount).toFixed(
+                    2
+                  )} ${currency}`
+                : "—"}
             </span>
           </div>
           <div className="flex justify-between">
@@ -102,7 +111,7 @@ const BankDetailsForm = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default BankDetailsForm
+export default BankDetailsForm;

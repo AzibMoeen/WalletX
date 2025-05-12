@@ -6,6 +6,11 @@ import { toast } from "sonner";
 import TransactionFilters from "./components/TransactionFilters";
 import TransactionStatsCards from "./components/TransactionStatsCards";
 import TransactionsList from "./components/TransactionsList";
+import {
+  TransactionFiltersSkeleton,
+  TransactionStatsCardsSkeleton,
+  TransactionsListSkeleton,
+} from "./components/SkeletonComponents";
 
 export default function TransactionsPage() {
   const {
@@ -21,16 +26,16 @@ export default function TransactionsPage() {
   const [activeCurrency, setActiveCurrency] = useState("all");
   const [activeTransactionType, setActiveTransactionType] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   // Fetch transactions when filters change
   useEffect(() => {
     // Keep track of whether this component is still mounted
     let isMounted = true;
 
     // Use debounce pattern to prevent multiple rapid calls
-    const timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(async () => {
       if (isMounted) {
-        fetchTransactions(
+        await fetchTransactions(
           period !== "all" ? period : null,
           currentPage,
           20,
@@ -41,6 +46,7 @@ export default function TransactionsPage() {
               : "send"
             : null
         );
+        if (isMounted) setIsDataLoaded(true);
       }
     }, 300); // Small delay to batch changes
 
@@ -218,36 +224,45 @@ export default function TransactionsPage() {
   // Prepare stats data for display
   const spentTotals = getTotalSpent();
   const receivedTotals = getTotalReceived();
-
   return (
     <div className="container mx-auto px-4 py-6 md:py-10 space-y-6 md:space-y-8">
-      <TransactionFilters
-        period={period}
-        setPeriod={setPeriod}
-        exportTransactionsToCSV={exportTransactionsToCSV}
-      />
+      {!isDataLoaded ? (
+        <>
+          <TransactionFiltersSkeleton />
+          <TransactionStatsCardsSkeleton />
+          <TransactionsListSkeleton />
+        </>
+      ) : (
+        <>
+          <TransactionFilters
+            period={period}
+            setPeriod={setPeriod}
+            exportTransactionsToCSV={exportTransactionsToCSV}
+          />
 
-      <TransactionStatsCards
-        spentTotals={spentTotals}
-        receivedTotals={receivedTotals}
-        getCurrencySymbol={getCurrencySymbol}
-      />
+          <TransactionStatsCards
+            spentTotals={spentTotals}
+            receivedTotals={receivedTotals}
+            getCurrencySymbol={getCurrencySymbol}
+          />
 
-      <TransactionsList
-        period={period}
-        activeCurrency={activeCurrency}
-        setActiveCurrency={setActiveCurrency}
-        activeTransactionType={activeTransactionType}
-        setActiveTransactionType={setActiveTransactionType}
-        filteredTransactions={transactions}
-        isLoading={isLoading}
-        isOutgoingTransaction={isOutgoingTransaction}
-        formatDate={formatDate}
-        getCurrencySymbol={getCurrencySymbol}
-        exportTransactionsToCSV={exportTransactionsToCSV}
-        pagination={pagination}
-        onPageChange={handlePageChange}
-      />
+          <TransactionsList
+            period={period}
+            activeCurrency={activeCurrency}
+            setActiveCurrency={setActiveCurrency}
+            activeTransactionType={activeTransactionType}
+            setActiveTransactionType={setActiveTransactionType}
+            filteredTransactions={transactions}
+            isLoading={isLoading}
+            isOutgoingTransaction={isOutgoingTransaction}
+            formatDate={formatDate}
+            getCurrencySymbol={getCurrencySymbol}
+            exportTransactionsToCSV={exportTransactionsToCSV}
+            pagination={pagination}
+            onPageChange={handlePageChange}
+          />
+        </>
+      )}
     </div>
   );
 }

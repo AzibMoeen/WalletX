@@ -1,6 +1,6 @@
-import nodemailer from 'nodemailer';
-import { User } from '../src/models/user.model.js';
-import dotenv from 'dotenv';
+import nodemailer from "nodemailer";
+import { User } from "../src/models/user.model.js";
+import dotenv from "dotenv";
 
 // Ensure environment variables are loaded
 dotenv.config();
@@ -8,24 +8,24 @@ dotenv.config();
 // Log email configuration for debugging (remove in production)
 console.log("Email Config:", {
   user: process.env.EMAIL_USER ? "Set" : "Not set",
-  pass: process.env.EMAIL_PASSWORD ? "Set" : "Not set"
+  pass: process.env.EMAIL_PASSWORD ? "Set" : "Not set",
 });
 
 // Frontend URL for redirection
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD 
+    pass: process.env.EMAIL_PASSWORD,
   },
   tls: {
-    rejectUnauthorized: false 
-  }
+    rejectUnauthorized: false,
+  },
 });
 
-transporter.verify(function(error, success) {
+transporter.verify(function (error, success) {
   if (error) {
     console.log("SMTP server connection error:", error);
   } else {
@@ -36,7 +36,7 @@ transporter.verify(function(error, success) {
 export const sendEmail = async ({ email, subject, html }) => {
   try {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      console.error('Email credentials not found in environment variables');
+      console.error("Email credentials not found in environment variables");
       return false;
     }
 
@@ -44,25 +44,30 @@ export const sendEmail = async ({ email, subject, html }) => {
       from: `"WalletX" <${process.env.EMAIL_USER}>`,
       to: email,
       subject,
-      html
+      html,
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent:', info.messageId);
+    console.log("Email sent:", info.messageId);
     return true;
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error("Error sending email:", error);
     return false;
   }
 };
 
-export const sendEmailNotification = async (userId, message, subject = 'WalletX Notification', customHtml = null) => {
+export const sendEmailNotification = async (
+  userId,
+  message,
+  subject = "WalletX Notification",
+  customHtml = null
+) => {
   try {
-    const FRONTEND_URL =  'https://wallet-x-three.vercel.app/request';
+    const FRONTEND_URL = "https://wallet-x-three.vercel.app/request";
     const user = await User.findById(userId);
-    
+
     if (!user || !user.email) {
-      console.error('User not found or has no email address');
+      console.error("User not found or has no email address");
       return false;
     }
 
@@ -82,25 +87,29 @@ export const sendEmailNotification = async (userId, message, subject = 'WalletX 
           <p>&copy; ${new Date().getFullYear()} WalletX. All Rights Reserved.</p>
         </div>
       </div>
-    `;
-
-    return await sendEmail({
+      `;
+    const result = await sendEmail({
       email: user.email,
       subject,
-      html:  defaultHtml
+      html: customHtml || defaultHtml,
     });
+
+    if (result) {
+      console.log("Email sent successfully to:", user.email);
+    }
+
+    return result;
   } catch (error) {
-    console.error('Error sending email notification:', error);
+    console.error("Error sending email notification:", error);
     return false;
   }
 };
 
 export const sendNotification = async (options) => {
-  if (options && typeof options === 'object') {
+  if (options && typeof options === "object") {
     const { userId, message, subject, html } = options;
     return await sendEmailNotification(userId, message, subject, html);
-  }
-  else {
+  } else {
     const [userId, message, subject] = arguments;
     return await sendEmailNotification(userId, message, subject);
   }

@@ -1,52 +1,60 @@
-"use client"
+"use client";
 
-import { useState, useEffect, Suspense } from "react"
-import { useForm } from "react-hook-form"
-import { Wallet, AlertCircle, Loader2, CheckCircle2 } from "lucide-react"
-import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
-import useAuthStore from "@/lib/store/useAuthStore"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
+import { useState, useEffect, Suspense } from "react";
+import { useForm } from "react-hook-form";
+import { Wallet, AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import useAuthStore from "@/lib/store/useAuthStore";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 // Component that safely uses useSearchParams inside Suspense
 function LoginContent() {
-  const [serverError, setServerError] = useState("")
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { login, isAuthenticated, isLoading, error, clearError } = useAuthStore()
-  
+  const [serverError, setServerError] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { login, isAuthenticated, isLoading, error, clearError } =
+    useAuthStore();
+
   // Check if user was redirected from successful verification
-  const verified = searchParams.get('verified') === 'true'
+  const verified = searchParams.get("verified") === "true";
   // Check if user was redirected from successful password reset
-  const passwordReset = searchParams.get('reset') === 'success'
+  const passwordReset = searchParams.get("reset") === "success";
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/wallet")
+      router.push("/wallet");
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, router]);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({ mode: "onChange" })
+  } = useForm({ mode: "onChange" });
 
   const onSubmit = async (data) => {
-    setServerError("")
-    clearError()
+    setServerError("");
+    clearError();
 
     try {
-      await login(data)
+      await login(data);
     } catch (error) {
-      setServerError(error.message)
+      setServerError(error.message);
     }
-  }
+  };
 
   return (
     <div className="w-full max-w-md">
@@ -64,20 +72,22 @@ function LoginContent() {
             <Alert className="bg-green-50 border-green-200 text-green-800">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-700">
-                Your email has been verified successfully. You can now log in to your account.
+                Your email has been verified successfully. You can now log in to
+                your account.
               </AlertDescription>
             </Alert>
           )}
-          
+
           {passwordReset && (
             <Alert className="bg-green-50 border-green-200 text-green-800">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-700">
-                Your password has been reset successfully. You can now log in with your new password.
+                Your password has been reset successfully. You can now log in
+                with your new password.
               </AlertDescription>
             </Alert>
           )}
-          
+
           {(serverError || error) && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -103,7 +113,11 @@ function LoginContent() {
                   })}
                 />
               </div>
-              {errors.email && <p className="text-sm font-medium text-red-500">{errors.email.message}</p>}
+              {errors.email && (
+                <p className="text-sm font-medium text-red-500">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -125,13 +139,17 @@ function LoginContent() {
                   required: "Password is required",
                 })}
               />
-              {errors.password && <p className="text-sm font-medium text-red-500">{errors.password.message}</p>}
+              {errors.password && (
+                <p className="text-sm font-medium text-red-500">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
 
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+              className="cursor-pointer w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
             >
               {isLoading ? (
                 <>
@@ -149,7 +167,9 @@ function LoginContent() {
               <Separator className="w-full" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
+              <span className="bg-white px-2 text-muted-foreground">
+                Or continue with
+              </span>
             </div>
           </div>
 
@@ -187,7 +207,10 @@ function LoginContent() {
         <CardFooter className="flex justify-center border-t p-4">
           <p className="text-sm text-muted-foreground">
             Don't have an account?{" "}
-            <Link href="/register" className="text-purple-600 font-medium hover:text-purple-800 transition-colors">
+            <Link
+              href="/register"
+              className="text-purple-600 font-medium hover:text-purple-800 transition-colors"
+            >
               Create Account
             </Link>
           </p>
@@ -217,4 +240,4 @@ const Login = () => {
   );
 };
 
-export default Login
+export default Login;

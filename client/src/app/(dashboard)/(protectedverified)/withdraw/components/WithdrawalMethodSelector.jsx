@@ -1,5 +1,5 @@
-import { CreditCard, Landmark } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { CreditCard, Landmark } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const WithdrawalMethodSelector = ({ withdrawalMethod, handleMethodChange }) => {
   return (
@@ -19,7 +19,7 @@ const WithdrawalMethodSelector = ({ withdrawalMethod, handleMethodChange }) => {
         </TabsTrigger>
       </TabsList>
     </Tabs>
-  )
-}
+  );
+};
 
-export default WithdrawalMethodSelector
+export default WithdrawalMethodSelector;

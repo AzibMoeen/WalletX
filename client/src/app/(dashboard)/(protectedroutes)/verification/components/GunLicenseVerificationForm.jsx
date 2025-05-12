@@ -1,10 +1,12 @@
-import { Calendar, Check, AlertCircle, X } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import FileUploader from "./FileUploader"
-import { useForm } from "react-hook-form"
+"use client";
+
+import { Calendar, Check, AlertCircle, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import FileUploader from "./FileUploader";
+import { useForm } from "react-hook-form";
 
 const GunLicenseVerificationForm = ({
   gunLicenseFile,
@@ -16,27 +18,27 @@ const GunLicenseVerificationForm = ({
   latestGunVerification,
   hasPendingOrVerifiedGun,
   isLoadingVerifications,
-  formatDate
+  formatDate,
 }) => {
   // Initialize React Hook Form
-  const { 
-    register, 
-    handleSubmit, 
+  const {
+    register,
+    handleSubmit,
     formState: { errors },
-    watch
+    watch,
   } = useForm({
     defaultValues: {
       licenseNumber: "",
       cnic: "",
       issueDate: "",
-      expiryDate: ""
+      expiryDate: "",
     },
-    mode: "onChange"
+    mode: "onChange",
   });
 
   // Get today's date for validation
-  const today = new Date().toISOString().split('T')[0];
-  
+  const today = new Date().toISOString().split("T")[0];
+
   // Watch form values for validation
   const issueDate = watch("issueDate");
 
@@ -44,14 +46,14 @@ const GunLicenseVerificationForm = ({
   const onSubmit = (data) => {
     if (!gunLicenseFile) {
       // Show error message for missing file
-      if (typeof submitGunVerification === 'function') {
+      if (typeof submitGunVerification === "function") {
         submitGunVerification(null, true); // Pass a flag to indicate missing file
       }
       return;
     }
-    
+
     // Call the parent submit handler with form data
-    if (typeof submitGunVerification === 'function') {
+    if (typeof submitGunVerification === "function") {
       submitGunVerification(data);
     }
   };
@@ -60,47 +62,58 @@ const GunLicenseVerificationForm = ({
   const renderVerificationStatus = () => {
     if (isLoadingVerifications) {
       return (
-        <div className="flex justify-center py-10">
+        <div className="">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       );
     }
 
     if (hasPendingOrVerifiedGun && latestGunVerification) {
+      const { status } = latestGunVerification;
+
+      const statusConfig = {
+        pending: {
+          icon: <AlertCircle className="h-4 w-4 text-amber-600" />,
+          bg: "bg-amber-50 border-amber-200 text-amber-800",
+          title: "Verification In Progress",
+          message:
+            "Your gun license verification is being reviewed. This process usually takes 1-3 business days.",
+        },
+        verified: {
+          icon: <Check className="h-5 w-5 text-green-600" />,
+          bg: "bg-green-50 border-green-200 text-green-800",
+          title: "Gun License Verified",
+          message: "Your gun license has been successfully verified.",
+        },
+        rejected: {
+          icon: <X className="h-5 w-5 text-red-600" />,
+          bg: "bg-red-50 border-red-200 text-red-800",
+          title: "Verification Rejected",
+          message:
+            "Your gun license verification was rejected. You can submit a new verification request.",
+        },
+      };
+
+      const config = statusConfig[status];
+
       return (
         <div className="space-y-4">
-          <Alert className={`${
-            latestGunVerification.status === 'pending' ? 'bg-amber-50 border-amber-200 text-amber-800' : 
-            latestGunVerification.status === 'verified' ? 'bg-green-50 border-green-200 text-green-800' : 
-            'bg-red-50 border-red-200 text-red-800'
-          }`}>
-            <div className="flex items-start gap-2">
-              {latestGunVerification.status === 'pending' ? (
-                <div className="h-5 w-5 mt-0.5 text-amber-600"><AlertCircle className="h-5 w-5" /></div>
-              ) : latestGunVerification.status === 'verified' ? (
-                <div className="h-5 w-5 mt-0.5 text-green-600"><Check className="h-5 w-5" /></div>
-              ) : (
-                <div className="h-5 w-5 mt-0.5 text-red-600"><X className="h-5 w-5" /></div>
-              )}
+          <Card className={`w-full ${config.bg}`}>
+            <CardHeader className="flex flex-row gap-2 items-start p-4">
+              <div className="mt-1">{config.icon}</div>
               <div>
-                <AlertTitle className="text-base">
-                  {latestGunVerification.status === 'pending' ? 'Verification In Progress' : 
-                   latestGunVerification.status === 'verified' ? 'Gun License Verified' : 
-                   'Verification Rejected'}
-                </AlertTitle>
-                <AlertDescription>
-                  {latestGunVerification.status === 'pending' && 'Your gun license verification is being reviewed. This process usually takes 1-3 business days.'}
-                  {latestGunVerification.status === 'verified' && 'Your gun license has been successfully verified.'}
-                  {latestGunVerification.status === 'rejected' && 'Your gun license verification was rejected. You can submit a new verification request.'}
-                </AlertDescription>
+                <div className="text-base font-medium">{config.title}</div>
+                <div>{config.message}</div>
               </div>
-            </div>
-          </Alert>
+            </CardHeader>
+          </Card>
 
-          {latestGunVerification.status !== 'rejected' && (
-            <div className="space-y-3 bg-gray-50 p-4 rounded-md">
-              <h3 className="font-medium">Verification Details</h3>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+          {status !== "rejected" && (
+            <Card className="w-full bg-gray-50 border border-gray-100">
+              <CardHeader>
+                <h3 className="font-medium text-sm">Verification Details</h3>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm">
                 <div className="text-muted-foreground">Submitted:</div>
                 <div>{formatDate(latestGunVerification.createdAt)}</div>
                 <div className="text-muted-foreground">License Number:</div>
@@ -112,128 +125,147 @@ const GunLicenseVerificationForm = ({
                 <div className="text-muted-foreground">Expiry Date:</div>
                 <div>{formatDate(latestGunVerification.expiryDate)}</div>
                 <div className="text-muted-foreground">Status:</div>
-                <div className={`font-medium ${
-                  latestGunVerification.status === 'pending' ? 'text-amber-600' : 
-                  latestGunVerification.status === 'verified' ? 'text-green-600' : 
-                  'text-red-600'
-                }`}>
-                  {latestGunVerification.status.charAt(0).toUpperCase() + latestGunVerification.status.slice(1)}
+                <div
+                  className={`font-medium ${
+                    status === "pending"
+                      ? "text-amber-600"
+                      : status === "verified"
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           )}
         </div>
       );
-    }
-
-    return null;
+    } else return null;
   };
-
-  // Either show the status or the form
-  const showForm = !hasPendingOrVerifiedGun || 
-                  (latestGunVerification && latestGunVerification.status === 'rejected');
+  const showForm =
+    !hasPendingOrVerifiedGun ||
+    (latestGunVerification && latestGunVerification.status === "rejected");
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       {renderVerificationStatus()}
-      
+
       {showForm && (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+        <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-6">
+          <div className="w-full grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="licenseNumber" className="text-base">
+              <Label htmlFor="licenseNumber" className="text-sm font-medium">
                 Gun License Number
               </Label>
-              <Input 
-                id="licenseNumber" 
-                className={`h-11 ${errors.licenseNumber ? "border-red-500" : ""}`}
+              <Input
+                id="licenseNumber"
+                className={`h-10 ${
+                  errors.licenseNumber ? "border-red-500" : ""
+                }`}
                 {...register("licenseNumber", {
                   required: "License number is required",
                   pattern: {
                     value: /^[A-Za-z0-9-]+$/,
-                    message: "Please enter a valid license number"
-                  }
+                    message: "Please enter a valid license number",
+                  },
                 })}
-                placeholder="Enter your license number" 
+                placeholder="Enter your license number"
               />
               {errors.licenseNumber && (
-                <p className="text-xs text-red-500 mt-1">{errors.licenseNumber.message}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.licenseNumber.message}
+                </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cnic" className="text-base">
+              <Label htmlFor="gunCnic" className="text-sm font-medium">
                 CNIC Number
               </Label>
-              <Input 
-                id="cnic" 
-                className={`h-11 ${errors.cnic ? "border-red-500" : ""}`}
+              <Input
+                id="gunCnic"
+                className={`h-10 ${errors.cnic ? "border-red-500" : ""}`}
                 {...register("cnic", {
                   required: "CNIC number is required",
                   pattern: {
                     value: /^\d{5}-\d{7}-\d{1}$/,
-                    message: "Please enter a valid CNIC number format (e.g., 12345-1234567-1)"
-                  }
+                    message:
+                      "Please enter a valid CNIC number format (e.g., 12345-1234567-1)",
+                  },
                 })}
-                placeholder="e.g., 12345-1234567-1" 
+                placeholder="e.g., 12345-1234567-1"
               />
               {errors.cnic && (
-                <p className="text-xs text-red-500 mt-1">{errors.cnic.message}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.cnic.message}
+                </p>
               )}
             </div>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="w-full grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="issueDate" className="text-base">
+              <Label htmlFor="issueDate" className="text-sm font-medium">
                 Issue Date
               </Label>
               <div className="relative">
-                <Input 
-                  id="issueDate" 
-                  type="date" 
-                  className={`h-11 ${errors.issueDate ? "border-red-500" : ""}`}
+                <Input
+                  id="issueDate"
+                  type="date"
+                  className={`h-10 input-date-right ${
+                    errors.dob ? "border-red-500" : ""
+                  }`}
                   {...register("issueDate", {
                     required: "Issue date is required",
-                    validate: value => {
+                    validate: (value) => {
                       const selectedDate = new Date(value);
                       const today = new Date();
-                      return selectedDate <= today || "Issue date cannot be in the future";
-                    }
+                      return (
+                        selectedDate <= today ||
+                        "Issue date cannot be in the future"
+                      );
+                    },
                   })}
                 />
-                <Calendar className="absolute right-3 top-3 h-5 w-5 text-muted-foreground pointer-events-none" />
               </div>
               {errors.issueDate && (
-                <p className="text-xs text-red-500 mt-1">{errors.issueDate.message}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.issueDate.message}
+                </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="expiryDate" className="text-base">
+              <Label htmlFor="expiryDate" className="text-sm font-medium">
                 Expiry Date
               </Label>
               <div className="relative">
-                <Input 
-                  id="expiryDate" 
-                  type="date" 
-                  className={`h-11 ${errors.expiryDate ? "border-red-500" : ""}`}
+                <Input
+                  id="expiryDate"
+                  type="date"
+                  className={`h-10 input-date-right ${
+                    errors.dob ? "border-red-500" : ""
+                  }`}
                   {...register("expiryDate", {
                     required: "Expiry date is required",
-                    validate: value => {
+                    validate: (value) => {
                       // Check that expiry date is after issue date
                       if (issueDate) {
-                        return new Date(value) > new Date(issueDate) || 
-                               "Expiry date must be after issue date";
+                        return (
+                          new Date(value) > new Date(issueDate) ||
+                          "Expiry date must be after issue date"
+                        );
                       }
                       return true;
-                    }
+                    },
                   })}
                 />
-                <Calendar className="absolute right-3 top-3 h-5 w-5 text-muted-foreground pointer-events-none" />
               </div>
               {errors.expiryDate && (
-                <p className="text-xs text-red-500 mt-1">{errors.expiryDate.message}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.expiryDate.message}
+                </p>
               )}
             </div>
           </div>
@@ -248,27 +280,36 @@ const GunLicenseVerificationForm = ({
           />
 
           {!gunLicenseFile && (
-            <p className="text-xs text-red-500 mt-1">License photo is required</p>
+            <p className="text-xs text-red-500 mt-1">
+              License photo is required
+            </p>
           )}
 
           {gunSubmitMessage && (
             <p
               className={`text-sm ${
-                gunSubmitMessage.type === 'error' ? 'text-red-500' : 'text-green-500'
+                gunSubmitMessage.type === "error"
+                  ? "text-red-500"
+                  : "text-green-500"
               }`}
             >
               {gunSubmitMessage.text}
             </p>
           )}
-          
           <Button
             type="submit"
-            className="w-full h-11 text-base"
-            disabled={isSubmittingGun || !gunLicenseFile || Object.keys(errors).length > 0}
+            className="cursor-pointer w-full h-10 text-base"
+            disabled={
+              isSubmittingGun ||
+              !gunLicenseFile ||
+              Object.keys(errors).length > 0
+            }
           >
-            {isSubmittingGun ? 'Submitting...' : 
-             latestGunVerification?.status === 'rejected' ? 
-             'Submit New Gun License Verification' : 'Submit Gun License Verification'}
+            {isSubmittingGun
+              ? "Submitting..."
+              : latestGunVerification?.status === "rejected"
+              ? "Submit New Gun License Verification"
+              : "Submit Gun License Verification"}
           </Button>
         </form>
       )}

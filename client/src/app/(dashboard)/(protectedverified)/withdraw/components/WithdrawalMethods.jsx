@@ -1,5 +1,11 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { CreditCard, Landmark } from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { CreditCard, Landmark } from "lucide-react";
 
 const WithdrawalMethods = () => {
   return (
@@ -36,12 +42,14 @@ const WithdrawalMethods = () => {
 
           <div className="mt-4 text-xs text-muted-foreground">
             <p>Withdrawals typically take 1-3 business days to process.</p>
-            <p className="mt-1">Verification may be required for large amounts.</p>
+            <p className="mt-1">
+              Verification may be required for large amounts.
+            </p>
           </div>
         </div>
       </CardContent>
     </Card>
-  )
-}
+  );
+};
 
-export default WithdrawalMethods
+export default WithdrawalMethods;

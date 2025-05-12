@@ -1,13 +1,23 @@
-import { Check } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
+import { Check } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 const VerificationGuidelines = () => {
   return (
-    <Card>
+    <Card className="shadow-sm border-gray-200">
       <CardHeader className="pb-3">
-        <CardTitle>Verification Guidelines</CardTitle>
-        <CardDescription>Follow these instructions for successful verification</CardDescription>
+        <CardTitle className="text-lg font-medium">
+          Verification Guidelines
+        </CardTitle>
+        <CardDescription>
+          Follow these instructions for successful verification
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
@@ -22,7 +32,7 @@ const VerificationGuidelines = () => {
           </p>
         </div>
 
-        <Separator />
+        <Separator className="my-2" />
 
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -36,7 +46,7 @@ const VerificationGuidelines = () => {
           </p>
         </div>
 
-        <Separator />
+        <Separator className="my-2" />
 
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -50,7 +60,7 @@ const VerificationGuidelines = () => {
           </p>
         </div>
 
-        <Separator />
+        <Separator className="my-2" />
 
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -65,7 +75,7 @@ const VerificationGuidelines = () => {
         </div>
       </CardContent>
     </Card>
-  )
-}
+  );
+};
 
-export default VerificationGuidelines
+export default VerificationGuidelines;

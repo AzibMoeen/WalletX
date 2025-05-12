@@ -8,6 +8,11 @@ import ReceivedRequestsCard from "./components/ReceivedRequestsCard";
 import SentRequestsCard from "./components/SentRequestsCard";
 import useAuthStore from "@/lib/store/useAuthStore";
 import useWalletStore from "@/lib/store/useWalletStore";
+import {
+  NewRequestFormSkeleton,
+  ReceivedRequestsCardSkeleton,
+  SentRequestsCardSkeleton,
+} from "./components/SkeletonComponents";
 
 export default function RequestPage() {
   const router = useRouter();
@@ -25,10 +30,10 @@ export default function RequestPage() {
     setSuccess: setStoreSuccess,
     clearError: clearStoreError,
   } = useWalletStore();
-
   const [localLoading, setLocalLoading] = useState(false);
   const [localError, setLocalError] = useState(null);
   const [localSuccess, setLocalSuccess] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   const [formData, setFormData] = useState({
     targetEmail: "",
@@ -47,12 +52,15 @@ export default function RequestPage() {
       fetchUser();
     }
   }, [isAuthenticated, user, fetchUser]);
-
   // Fetch requests when user is authenticated
   useEffect(() => {
-    if (isAuthenticated && user) {
-      fetchMoneyRequests();
-    }
+    const loadData = async () => {
+      if (isAuthenticated && user) {
+        await fetchMoneyRequests();
+        setIsDataLoaded(true);
+      }
+    };
+    loadData();
   }, [isAuthenticated, user, fetchMoneyRequests]);
 
   // Update requests list when requests state changes
@@ -165,36 +173,45 @@ export default function RequestPage() {
           <TabsTrigger value="new-request">New Request</TabsTrigger>
           <TabsTrigger value="received-requests">Requests Received</TabsTrigger>
           <TabsTrigger value="sent-requests">Requests Sent</TabsTrigger>
-        </TabsList>
-
+        </TabsList>{" "}
         <TabsContent value="new-request">
-          <NewRequestForm
-            formData={formData}
-            handleChange={handleChange}
-            handleSelectChange={handleSelectChange}
-            handleSubmit={handleSubmit}
-            isLoading={isLoading}
-            error={error}
-            success={success}
-            getCurrencySymbol={getCurrencySymbol}
-          />
+          {!isDataLoaded ? (
+            <NewRequestFormSkeleton />
+          ) : (
+            <NewRequestForm
+              formData={formData}
+              handleChange={handleChange}
+              handleSelectChange={handleSelectChange}
+              handleSubmit={handleSubmit}
+              isLoading={isLoading}
+              error={error}
+              success={success}
+              getCurrencySymbol={getCurrencySymbol}
+            />
+          )}
         </TabsContent>
-
         <TabsContent value="received-requests">
-          <ReceivedRequestsCard
-            receivedRequests={receivedRequests}
-            formatDate={formatDate}
-            getCurrencySymbol={getCurrencySymbol}
-            handlePayRequest={handlePayRequest}
-          />
+          {!isDataLoaded ? (
+            <ReceivedRequestsCardSkeleton />
+          ) : (
+            <ReceivedRequestsCard
+              receivedRequests={receivedRequests}
+              formatDate={formatDate}
+              getCurrencySymbol={getCurrencySymbol}
+              handlePayRequest={handlePayRequest}
+            />
+          )}
         </TabsContent>
-
         <TabsContent value="sent-requests">
-          <SentRequestsCard
-            sentRequests={sentRequests}
-            formatDate={formatDate}
-            getCurrencySymbol={getCurrencySymbol}
-          />
+          {!isDataLoaded ? (
+            <SentRequestsCardSkeleton />
+          ) : (
+            <SentRequestsCard
+              sentRequests={sentRequests}
+              formatDate={formatDate}
+              getCurrencySymbol={getCurrencySymbol}
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>

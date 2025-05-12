@@ -1,8 +1,6 @@
-import express from 'express';
-import { verifyJWT } from '../middleware/auth.middleware.js';
+import express from "express";
+import { verifyJWT } from "../middleware/auth.middleware.js";
 import {
-  depositFunds,
-  withdrawFunds,
   exchangeCurrency,
   sendMoney,
   getWalletBalance,
@@ -12,41 +10,57 @@ import {
   requestMoney,
   payRequest,
   getMoneyRequests,
-  getFilteredTransactionHistory
-} from '../controllers/transaction.controllers.js';
+  getFilteredTransactionHistory,
+} from "../controllers/transaction.controllers.js";
+
+import {
+  createPaymentIntent,
+  handlePaymentSuccess,
+  createConnectAccount,
+  processDirectDeposit,
+  createWithdrawal,
+  createInstantWithdrawal,
+} from "../controllers/stripe.controllers.js";
 
 const router = express.Router();
 
-router.use(verifyJWT); 
+// All other routes need JWT
+router.use(verifyJWT);
 
 // Wallet routes
-router.get('/balance', getWalletBalance);
+router.get("/balance", getWalletBalance);
 
 // User list for transfer
-router.get('/users/transfer', getAllUsersForTransfer);
+router.get("/users/transfer", getAllUsersForTransfer);
 
 // Transaction history routes
-router.get('/history', getTransactionHistory);
-router.get('/filtered-history', getFilteredTransactionHistory);
+router.get("/history", getTransactionHistory);
+router.get("/filtered-history", getFilteredTransactionHistory);
 
 // Money requests - must be before dynamic route
-router.get('/requests', getMoneyRequests); 
+router.get("/requests", getMoneyRequests);
 
 // Individual transaction details - must be after all specific routes
-router.get('/:transactionId', getTransactionDetails);
+router.get("/:transactionId", getTransactionDetails);
 
-// Deposit and withdraw - all parameters should be in request body
-router.post('/deposit', depositFunds);
-router.post('/withdraw', withdrawFunds);
 
-// Money transfer - all parameters should be in request body
-router.post('/send', sendMoney);
+
+router.post("/send", sendMoney);
 
 // Currency exchange - all parameters should be in request body
-router.post('/exchange', exchangeCurrency);
+router.post("/exchange", exchangeCurrency);
 
 // Money requests - POST routes - all parameters should be in request body
-router.post('/request', requestMoney);
-router.post('/pay-request', payRequest); // Expects requestId in the request body
+router.post("/request", requestMoney);
+router.post("/pay-request", payRequest); // Expects requestId in the request body
+
+// Stripe specific endpoints
+router.post("/stripe/create-payment-intent", createPaymentIntent);
+router.post("/stripe/payment-success", handlePaymentSuccess);
+router.post("/stripe/connect-account", createConnectAccount); // New endpoint to create Stripe Connect accounts
+router.post("/stripe/direct-deposit", processDirectDeposit); // Add the new direct deposit endpoint
+
+router.post("/stripe/withdraw", createWithdrawal);
+router.post("/stripe/instant-withdraw", createInstantWithdrawal);
 
 export default router;
