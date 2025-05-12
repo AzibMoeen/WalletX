@@ -2,8 +2,7 @@ import dotenv from "dotenv";
 import Stripe from "stripe";
 dotenv.config();
 
-const stripeSecretKey =
-  process.env.STRIPE_SECRET_KEY || "sk_test_4eC39HqLyjWDarjtT1zdp7dc"; // Standard test secret key format
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY; // Standard test secret key format
 
 // Create Stripe instance with specific API version for better stability
 const stripe = new Stripe(stripeSecretKey, {
