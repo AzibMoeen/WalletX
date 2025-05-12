@@ -2,16 +2,14 @@ import nodemailer from "nodemailer";
 import { User } from "../src/models/user.model.js";
 import dotenv from "dotenv";
 
-// Ensure environment variables are loaded
 dotenv.config();
 
-// Log email configuration for debugging (remove in production)
 console.log("Email Config:", {
   user: process.env.EMAIL_USER ? "Set" : "Not set",
   pass: process.env.EMAIL_PASSWORD ? "Set" : "Not set",
 });
 
-// Frontend URL for redirection
+  // Frontend URL for redirection
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 const transporter = nodemailer.createTransport({

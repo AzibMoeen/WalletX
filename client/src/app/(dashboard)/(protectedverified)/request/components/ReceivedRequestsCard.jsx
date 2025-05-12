@@ -1,25 +1,25 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
-import { useState } from "react"
-
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 export default function ReceivedRequestsCard({
   receivedRequests,
   formatDate,
   getCurrencySymbol,
-  handlePayRequest
+  handlePayRequest,
 }) {
-  const [payingRequestId, setPayingRequestId] = useState(null)
-  
+  const [payingRequestId, setPayingRequestId] = useState(null);
+
   const onPayRequest = async (requestId) => {
     try {
-      setPayingRequestId(requestId)
-      await handlePayRequest(requestId)
+      setPayingRequestId(requestId);
+      await handlePayRequest(requestId);
     } finally {
-      setPayingRequestId(null)
+      setPayingRequestId(null);
     }
-  }
-  
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -33,35 +33,47 @@ export default function ReceivedRequestsCard({
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="font-medium">
-                      From: {request.user?.fullname || request.user?.email || 'Unknown user'}
+                      From:{" "}
+                      {request.user?.fullname ||
+                        request.user?.email ||
+                        "Unknown user"}
                     </p>
-                    <p className="text-sm text-gray-500">{formatDate(request.createdAt)}</p>
+                    <p className="text-sm text-gray-500">
+                      {formatDate(request.createdAt)}
+                    </p>
                   </div>
-                <div 
+                  <Badge
                     className={
-                      request.status === 'completed' 
-                        ? 'bg-green-100 text-green-800' 
-                        : request.status === 'pending' 
-                        ? 'bg-yellow-100 text-yellow-800' 
-                        : 'bg-red-100 text-red-800'
+                      request.status === "completed"
+                        ? "bg-emerald-100 text-emerald-800" // Using Emerald for completed to match new accent color
+                        : request.status === "pending"
+                        ? "bg-amber-100 text-amber-800" // Using Amber for pending for a warmer neutral
+                        : "bg-red-100 text-red-800" // Keeping Red for rejected/default as it aligns with destructive color
                     }
                   >
-                    {request.status === 'completed' ? 'Paid' : request.status === 'pending' ? 'Pending' : 'Rejected'}
-                  </div>
+                    {request.status === "completed"
+                      ? "Paid"
+                      : request.status === "pending"
+                      ? "Pending"
+                      : "Rejected"}
+                  </Badge>
                 </div>
-                
+
                 <div className="mt-4 flex justify-between items-center">
                   <div>
                     <p className="text-lg font-bold">
-                      {getCurrencySymbol(request.currencyFrom)}{request.amount.toFixed(2)} {request.currencyFrom}
+                      {getCurrencySymbol(request.currencyFrom)}
+                      {request.amount.toFixed(2)} {request.currencyFrom}
                     </p>
                     {request.notes && (
-                      <p className="text-sm text-gray-600 mt-1">{request.notes}</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {request.notes}
+                      </p>
                     )}
                   </div>
-                  
-                  {request.status === 'pending' && (
-                    <Button 
+
+                  {request.status === "pending" && (
+                    <Button
                       onClick={() => onPayRequest(request._id)}
                       disabled={payingRequestId === request._id}
                       className="bg-green-600 hover:bg-green-700"
@@ -87,5 +99,5 @@ export default function ReceivedRequestsCard({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

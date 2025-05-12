@@ -36,6 +36,7 @@ export default function DepositPage() {
     success,
     fetchBalance,
     depositFunds,
+    createPaymentIntent,
     getBalanceDisplay,
     getCurrencySymbol,
     setSuccess,
@@ -120,30 +121,12 @@ export default function DepositPage() {
         if (formData.stripePaymentMethodId) {
           // Process with the Stripe payment method
           try {
-            // First, try to create a payment intent through our Next.js API route
-            const response = await fetch(
-              `${API_BASE_URL}/api/transactions/stripe/create-payment-intent`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${localStorage.getItem(
-                    "accessToken"
-                  )}`,
-                },
-                body: JSON.stringify({
-                  amount: Math.round(parseFloat(formData.amount) * 100), // convert to cents
-                  currency: formData.currency,
-                  payment_method_id: formData.stripePaymentMethodId,
-                }),
-              }
+            // Create payment intent using the store method
+            const paymentData = await createPaymentIntent(
+              formData.amount,
+              formData.currency,
+              formData.stripePaymentMethodId
             );
-
-            if (!response.ok) {
-              throw new Error("Failed to create payment intent");
-            }
-
-            const paymentData = await response.json();
 
             // Now deposit funds with the payment intent ID
             await depositFunds({

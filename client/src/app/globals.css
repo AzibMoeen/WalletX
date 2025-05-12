@@ -4,12 +4,14 @@
 /* Custom variant */
 @custom-variant dark (&:is(.dark *));
 
-/* Theme Variables */
+/* Theme Variables - Updated for a harmonious aesthetic */
 @theme inline {
-  --gradient-from: #1e3a8a;
-  --gradient-to: #3b82f6;
-  --gradient-hover-from: #172554;
-  --gradient-hover-to: #2563eb;
+  --gradient-from: var(--primary);
+  --gradient-to: var(--secondary);
+  --gradient-hover-from: var(--primary-darker);
+  /* New custom var for hover state */
+  --gradient-hover-to: var(--secondary-darker);
+  /* New custom var for hover state */
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -50,10 +52,12 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Light Theme */
+/* Light Theme - A sophisticated blend of deep teal and soft blues/greens */
 :root {
-  --background: #f9fafb;
-  --foreground: #0f172a;
+  --background: #f8fafc;
+  /* Soft off-white */
+  --foreground: #1e293b;
+  /* Dark slate gray */
 
   --card: #ffffff;
   --card-foreground: #1e293b;
@@ -61,64 +65,100 @@
   --popover: #ffffff;
   --popover-foreground: #1e293b;
 
-  --muted: #f1f5f9;
-  --muted-foreground: #475569;
+  --muted: #e2e8f0;
+  /* Light grayish blue */
+  --muted-foreground: #64748b;
+  /* Medium slate gray */
 
-  --primary: #1e3a8a;
+  --primary: #0f766e;
+  /* Deep Teal */
   --primary-foreground: #ffffff;
+  --primary-darker: #0b5a54;
+  /* Darker shade for hover */
 
   --secondary: #2563eb;
+  /* Royal Blue */
   --secondary-foreground: #ffffff;
+  --secondary-darker: #1d4ed8;
+  /* Darker shade for hover */
 
-  --accent: #0ea5e9;
+  --accent: #10b981;
+  /* Emerald Green */
   --accent-foreground: #ffffff;
 
   --destructive: #ef4444;
+  /* Standard Red */
   --destructive-foreground: #ffffff;
 
-  --border: #e2e8f0;
+  --border: #cbd5e1;
+  /* Light gray-blue */
   --input: #f1f5f9;
-  --ring: #93c5fd;
+  /* Very light gray */
+  --ring: #67e8f9;
+  /* Light Aqua/Cyan for focus rings */
 
-  --sidebar-background: #1e3a8a;
+  --sidebar-background: #0f766e;
+  /* Deep Teal */
   --sidebar-foreground: #e0f2fe;
-  --sidebar-primary: #2563eb;
+  /* Light Cyan for text */
+  --sidebar-primary: #14b8a6;
+  /* Lighter Teal */
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #3b82f6;
+  --sidebar-accent: #2dd4bf;
+  /* Even Lighter Teal */
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #cbd5e1;
-  --sidebar-ring: #60a5fa;
+  --sidebar-border: #7dd3fc;
+  /* Light Blue */
+  --sidebar-ring: #67e8f9;
+  /* Light Aqua */
 
-  --chart-1: #3b82f6;
-  --chart-2: #38bdf8;
-  --chart-3: #6366f1;
-  --chart-4: #22d3ee;
-  --chart-5: #0ea5e9;
+  --chart-1: #0f766e;
+  /* Deep Teal */
+  --chart-2: #14b8a6;
+  /* Lighter Teal */
+  --chart-3: #2dd4bf;
+  /* Even Lighter Teal */
+  --chart-4: #67e8f9;
+  /* Light Aqua */
+  --chart-5: #38bdf8;
+  /* Sky Blue */
 
   --radius: 0.625rem;
 }
 
-/* Dark Theme */
+/* Dark Theme - Richer, deeper tones complementing the light theme */
 .dark {
-  --background: #0f172a;
-  --foreground: #f8fafc;
+  --background: #020617;
+  /* Very dark blue-gray */
+  --foreground: #e2e8f0;
+  /* Light gray-blue */
 
   --card: #1e293b;
+  /* Dark slate gray */
   --card-foreground: #f1f5f9;
 
   --popover: #1e293b;
   --popover-foreground: #f1f5f9;
 
   --muted: #334155;
+  /* Darker gray-blue */
   --muted-foreground: #94a3b8;
+  /* Medium gray-blue */
 
-  --primary: #2563eb;
+  --primary: #14b8a6;
+  /* Lighter Teal for contrast */
   --primary-foreground: #ffffff;
+  --primary-darker: #0f9489;
+  /* Darker shade for hover */
 
   --secondary: #4f46e5;
+  /* Indigo */
   --secondary-foreground: #ffffff;
+  --secondary-darker: #4338ca;
+  /* Darker shade for hover */
 
-  --accent: #0284c7;
+  --accent: #06b6d4;
+  /* Darker Cyan/Teal */
   --accent-foreground: #ffffff;
 
   --destructive: #ef4444;
@@ -126,21 +166,23 @@
 
   --border: #334155;
   --input: #334155;
-  --ring: #1d4ed8;
+  --ring: #22d3ee;
+  /* Bright Cyan for focus rings */
 
-  --sidebar-background: #1e3a8a;
+  --sidebar-background: #0f766e;
+  /* Deep Teal (consistent) */
   --sidebar-foreground: #94a3b8;
-  --sidebar-primary: #2563eb;
+  --sidebar-primary: #14b8a6;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #3b82f6;
+  --sidebar-accent: #2dd4bf;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #1e40af;
-  --sidebar-ring: #60a5fa;
+  --sidebar-border: #06b6d4;
+  --sidebar-ring: #22d3ee;
 
-  --chart-1: #3b82f6;
-  --chart-2: #38bdf8;
-  --chart-3: #6366f1;
-  --chart-4: #22d3ee;
+  --chart-1: #14b8a6;
+  --chart-2: #2dd4bf;
+  --chart-3: #67e8f9;
+  --chart-4: #38bdf8;
   --chart-5: #0ea5e9;
 
   --radius: 0.5rem;
@@ -161,12 +203,12 @@
 
   /* Button with gradient */
   .btn-gradient {
-    @apply bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] hover:from-[#172554] hover:to-[#3b82f6] text-white text-lg font-semibold rounded-md px-4 py-2;
+    @apply bg-gradient-to-r from-[color:var(--gradient-from)] to-[color:var(--gradient-to)] hover:from-[color:var(--gradient-hover-from)] hover:to-[color:var(--gradient-hover-to)] text-white text-lg font-semibold rounded-md px-4 py-2;
   }
 
   /* Primary Button */
   .btn-primary {
-    @apply bg-[color:var(--primary)] text-[color:var(--primary-foreground)] hover:bg-blue-700 transition rounded-md px-4 py-2 font-medium;
+    @apply bg-[color:var(--primary)] text-[color:var(--primary-foreground)] hover:bg-[color:var(--primary-darker)] transition rounded-md px-4 py-2 font-medium;
   }
 
   /* Card Styling */
@@ -186,7 +228,7 @@
 
   /* Alert Boxes */
   .alert-info {
-    @apply bg-blue-50 text-blue-800 border border-blue-200 px-4 py-3 rounded-md;
+    @apply bg-sky-50 text-sky-800 border border-sky-200 px-4 py-3 rounded-md;
   }
 
   .alert-danger {
@@ -194,21 +236,21 @@
   }
 
   .alert-success {
-    @apply bg-green-50 text-green-800 border border-green-200 px-4 py-3 rounded-md;
+    @apply bg-emerald-50 text-emerald-800 border border-emerald-200 px-4 py-3 rounded-md;
   }
 
   /* Tabs or Navigation Pills */
   .tab {
-    @apply px-4 py-2 text-sm font-medium border-b-2 border-transparent hover:border-blue-500 text-blue-700;
+    @apply px-4 py-2 text-sm font-medium border-b-2 border-transparent hover:border-[color:var(--secondary)] text-[color:var(--muted-foreground)];
   }
 
   .tab-active {
-    @apply border-blue-600 font-bold;
+    @apply border-[color:var(--primary)] font-bold text-[color:var(--primary)];
   }
 
   /* Modal */
   .modal {
-    @apply bg-white text-[color:var(--foreground)] rounded-lg p-6 shadow-lg border border-[color:var(--border)];
+    @apply bg-[color:var(--card)] text-[color:var(--foreground)] rounded-lg p-6 shadow-lg border border-[color:var(--border)];
   }
 
   .modal-header {
@@ -229,7 +271,8 @@
   }
 
   .sidebar-item:hover {
-    @apply bg-white text-[#1e3a8a];
+    @apply bg-white/10 text-white;
+    /* Adjusted hover for better contrast on dark sidebar */
   }
 
   /* Navbar */
@@ -238,7 +281,8 @@
   }
 
   .navbar a {
-    @apply text-white px-4 py-2 hover:bg-white hover:text-[#1e3a8a] transition;
+    @apply text-white px-4 py-2 hover:bg-white/10 hover:text-white transition;
+    /* Adjusted hover */
   }
 
   /* Input Date Styling */
@@ -247,6 +291,7 @@
     right: 1rem;
     z-index: 1;
     filter: invert(0.5);
+    /* Adjust filter for better visibility on different backgrounds */
   }
 
   .input-date-right {

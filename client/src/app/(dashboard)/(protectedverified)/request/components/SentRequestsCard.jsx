@@ -1,4 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function SentRequestsCard({
   sentRequests,
@@ -18,29 +19,41 @@ export default function SentRequestsCard({
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="font-medium">
-                      To: {request.recipient?.fullname || request.recipient?.email || 'Unknown user'}
+                      To:{" "}
+                      {request.recipient?.fullname ||
+                        request.recipient?.email ||
+                        "Unknown user"}
                     </p>
-                    <p className="text-sm text-gray-500">{formatDate(request.createdAt)}</p>
+                    <p className="text-sm text-gray-500">
+                      {formatDate(request.createdAt)}
+                    </p>
                   </div>
-                  <div
+                  <Badge
                     className={
-                      request.status === 'completed' 
-                        ? 'bg-green-100 text-green-800' 
-                        : request.status === 'pending' 
-                        ? 'bg-yellow-100 text-yellow-800' 
-                        : 'bg-red-100 text-red-800'
+                      request.status === "completed"
+                        ? "bg-green-100 text-green-800"
+                        : request.status === "pending"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-red-100 text-red-800"
                     }
                   >
-                    {request.status === 'completed' ? 'Paid' : request.status === 'pending' ? 'Pending' : 'Rejected'}
-                  </div>
+                    {request.status === "completed"
+                      ? "Paid"
+                      : request.status === "pending"
+                      ? "Pending"
+                      : "Rejected"}
+                  </Badge>
                 </div>
-                
+
                 <div className="mt-4">
                   <p className="text-lg font-bold">
-                    {getCurrencySymbol(request.currencyFrom)}{request.amount.toFixed(2)} {request.currencyFrom}
+                    {getCurrencySymbol(request.currencyFrom)}
+                    {request.amount.toFixed(2)} {request.currencyFrom}
                   </p>
                   {request.notes && (
-                    <p className="text-sm text-gray-600 mt-1">{request.notes}</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {request.notes}
+                    </p>
                   )}
                 </div>
               </Card>
@@ -53,5 +66,5 @@ export default function SentRequestsCard({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

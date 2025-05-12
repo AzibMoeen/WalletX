@@ -8,7 +8,7 @@ import {
   createStripeTransfer,
   createStripePaymentRequest,
   createStripeUserTransfer,
-} from "../stripe-real"; // Using real Stripe implementation
+} from "../stripe-real";
 
 const CURRENCIES = [
   { value: "USD", label: "USD ($)", symbol: "$" },
@@ -275,6 +275,47 @@ const useWalletStore = create(
             success: false,
           });
           toast.error(error.message || "Failed to send money");
+          throw error;
+        }
+      },
+      createPaymentIntent: async (amount, currency, paymentMethodId) => {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return null;
+
+        set({ isLoading: true, error: null });
+        try {
+          const response = await fetch(
+            `${API_URL}/transactions/stripe/create-payment-intent`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                amount: Math.round(parseFloat(amount) * 100), // convert to cents
+                currency,
+                payment_method_id: paymentMethodId,
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(
+              errorData.message || "Failed to create payment intent"
+            );
+          }
+
+          const data = await response.json();
+          set({ isLoading: false });
+          return data;
+        } catch (error) {
+          set({
+            isLoading: false,
+            error: error.message,
+          });
+          toast.error(error.message || "Failed to create payment intent");
           throw error;
         }
       },
