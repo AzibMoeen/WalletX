@@ -5,7 +5,7 @@ import { API_BASE_URL } from "./config";
 // Load the real Stripe instance with your publishable key
 // Using the client's actual test key
 const stripePromise = loadStripe(
-  "pk_test_51RM5U2DGeCLU0T82JpW6q3nEApx4M5xpIwg95WpPGUWBtVU4gO0CbGVEc1atFbhdQNt3c4c4EDnAFz8DYskvM4zE00ca5fTZqj"
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 );
 
 // Helper for backend API calls related to payment intents
