@@ -14,28 +14,10 @@ dotenv.config();
 const app = express();
 
 // Define allowed origins
-const allowedOrigins = [
-  process.env.CORS_ORIGIN,
-  "http://localhost:3000",
-  "https://monkfish-adapted-properly.ngrok-free.app",
-  "https://wallet-x-three.vercel.app",
-  "https://walletx-production.up.railway.app",
-  "https://new-origin.example.com",
-  "https://wallet-x-three.vercel.app",
-];
+// Allow all origins for CORS
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps, curl requests)
-      if (!origin) return callback(null, true);
-
-      // Check if the origin is in the allowed list
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(null, true); // Temporarily allow all origins for development
-      }
-    },
+    origin: true, // This allows all origins
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
