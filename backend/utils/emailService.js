@@ -9,8 +9,8 @@ console.log("Email Config:", {
   pass: process.env.EMAIL_PASSWORD ? "Set" : "Not set",
 });
 
-  // Frontend URL for redirection
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+// Frontend URL for redirection
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://walletx-production.up.railway.app";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
