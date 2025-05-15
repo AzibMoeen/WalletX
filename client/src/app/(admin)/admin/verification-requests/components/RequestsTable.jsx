@@ -158,7 +158,8 @@ export function RequestsTable({
                 )}
               </tbody>
             </table>
-          </div>
+            </div>
+            
 
           {/* Mobile view - cards */}
           <div className="md:hidden space-y-4">

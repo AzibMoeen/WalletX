@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { toast } from "sonner";
 import { API_BASE_URL } from "../config";
-import { fetchWithAuth } from "../authUtils";
 import {
   createPaymentIntent,
   confirmPaymentSuccess,
@@ -24,6 +23,26 @@ const exchangeRates = {
 };
 
 const API_URL = `${API_BASE_URL}/api`;
+
+// Helper function to replace fetchWithAuth
+const fetchWithCookies = async (url, options = {}) => {
+  const response = await fetch(url, {
+    ...options,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "API request failed");
+  }
+
+  return { data };
+};
 
 const useWalletStore = create(
   persist(
@@ -80,7 +99,7 @@ const useWalletStore = create(
       fetchBalance: async () => {
         set({ isLoading: true, error: null });
         try {
-          const { data } = await fetchWithAuth(
+          const { data } = await fetchWithCookies(
             `${API_URL}/transactions/balance`
           );
 
@@ -126,8 +145,7 @@ const useWalletStore = create(
           if (type) {
             url += `&type=${type}`;
           }
-
-          const { data } = await fetchWithAuth(url);
+          const { data } = await fetchWithCookies(url);
 
           if (!data) {
             throw new Error("Failed to fetch transactions");
@@ -164,15 +182,11 @@ const useWalletStore = create(
           return null;
         }
       },
-
       fetchStripeTransactionHistory: async (
         limit = 100,
         startingAfter = null,
         endingBefore = null
       ) => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return null;
-
         set({ isLoading: true, error: null });
         try {
           let url = `${API_URL}/transactions/stripe/transaction-history?limit=${limit}`;
@@ -185,19 +199,7 @@ const useWalletStore = create(
             url += `&ending_before=${endingBefore}`;
           }
 
-          const response = await fetch(url, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(
-              data.message || "Failed to fetch Stripe transaction history"
-            );
-          }
+          const { data } = await fetchWithCookies(url);
 
           set({
             isLoading: false,
@@ -213,15 +215,10 @@ const useWalletStore = create(
           return null;
         }
       },
-
       transferFunds: async (transferData) => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return null;
-
         set({ isLoading: true, error: null });
         try {
           // All transfers should now go through Stripe processing
-          let response;
           let data;
 
           // If there's a payment method ID, user is paying with a credit card via Stripe
@@ -230,20 +227,15 @@ const useWalletStore = create(
             data = await createStripeUserTransfer(transferData);
           } else {
             // Standard wallet transfer - still processed via Stripe on backend
-            response = await fetch(`${API_URL}/transactions/send`, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(transferData),
-            });
+            const { data: responseData } = await fetchWithCookies(
+              `${API_URL}/transactions/send`,
+              {
+                method: "POST",
+                body: JSON.stringify(transferData),
+              }
+            );
 
-            data = await response.json();
-
-            if (!response.ok) {
-              throw new Error(data.message || "Transfer failed");
-            }
+            data = responseData;
           }
 
           // Only update balance after transfer, don't fetch transactions
@@ -263,19 +255,12 @@ const useWalletStore = create(
         }
       },
       createPaymentIntent: async (amount, currency, paymentMethodId) => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return null;
-
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch(
+          const { data } = await fetchWithCookies(
             `${API_URL}/transactions/stripe/create-payment-intent`,
             {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
               body: JSON.stringify({
                 amount: Math.round(parseFloat(amount) * 100), // convert to cents
                 currency,
@@ -284,14 +269,6 @@ const useWalletStore = create(
             }
           );
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(
-              errorData.message || "Failed to create payment intent"
-            );
-          }
-
-          const data = await response.json();
           set({ isLoading: false });
           return data;
         } catch (error) {
@@ -303,15 +280,10 @@ const useWalletStore = create(
           throw error;
         }
       },
-
       depositFunds: async (depositData) => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return null;
-
         set({ isLoading: true, error: null });
         try {
           // Check if this is a Stripe payment
-          let response;
           let data;
 
           if (depositData.paymentMethod === "stripe") {
@@ -331,17 +303,11 @@ const useWalletStore = create(
               console.log(
                 "⚠️ Stripe error detected, falling back to simulation:",
                 stripeError.message
-              );
-
-              // Fall back to simulated deposit
-              response = await fetch(
+              ); // Fall back to simulated deposit
+              const { data: responseData } = await fetchWithCookies(
                 `${API_URL}/transactions/simulate-deposit`,
                 {
                   method: "POST",
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                  },
                   body: JSON.stringify({
                     amount: depositData.amount,
                     currency: depositData.currency,
@@ -353,45 +319,28 @@ const useWalletStore = create(
                   }),
                 }
               );
-
-              data = await response.json();
-
-              if (!response.ok) {
-                throw new Error(data.message || "Simulated deposit failed");
-              }
+              data = responseData;
             }
           } else {
             // Use standard API for deposit
             try {
-              response = await fetch(`${API_URL}/transactions/deposit`, {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(depositData),
-              });
-
-              data = await response.json();
-
-              if (!response.ok) {
-                throw new Error(data.message || "Deposit failed");
-              }
+              const { data: responseData } = await fetchWithCookies(
+                `${API_URL}/transactions/deposit`,
+                {
+                  method: "POST",
+                  body: JSON.stringify(depositData),
+                }
+              );
+              data = responseData;
             } catch (regularError) {
               console.log(
                 "⚠️ Regular deposit error detected, falling back to simulation:",
                 regularError.message
-              );
-
-              // Fall back to simulated deposit
-              response = await fetch(
+              ); // Fall back to simulated deposit
+              const { data: responseData } = await fetchWithCookies(
                 `${API_URL}/transactions/simulate-deposit`,
                 {
                   method: "POST",
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                  },
                   body: JSON.stringify({
                     amount: depositData.amount,
                     currency: depositData.currency,
@@ -403,12 +352,7 @@ const useWalletStore = create(
                   }),
                 }
               );
-
-              data = await response.json();
-
-              if (!response.ok) {
-                throw new Error(data.message || "Simulated deposit failed");
-              }
+              data = responseData;
             }
           }
 
@@ -430,9 +374,6 @@ const useWalletStore = create(
       },
 
       requestMoney: async (requestData) => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return null;
-
         set({ isLoading: true, error: null });
         try {
           // Check if we're using Stripe for payment requests
@@ -450,20 +391,14 @@ const useWalletStore = create(
             });
           } else {
             // Use standard API for request
-            response = await fetch(`${API_URL}/transactions/request`, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(requestData),
-            });
-
-            data = await response.json();
-
-            if (!response.ok) {
-              throw new Error(data.message || "Money request failed");
-            }
+            const { data: responseData } = await fetchWithCookies(
+              `${API_URL}/transactions/request`,
+              {
+                method: "POST",
+                body: JSON.stringify(requestData),
+              }
+            );
+            data = responseData;
           }
 
           get().fetchMoneyRequests();
@@ -483,29 +418,15 @@ const useWalletStore = create(
       },
 
       payMoneyRequest: async (requestId, useStripe = false) => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return null;
-
         set({ isLoading: true, error: null });
         try {
           let url = useStripe
             ? `${API_URL}/transactions/stripe/payment-request`
             : `${API_URL}/transactions/pay-request`;
-
-          const response = await fetch(url, {
+          const { data } = await fetchWithCookies(url, {
             method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
             body: JSON.stringify({ requestId }),
           });
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.message || "Payment failed");
-          }
 
           // Update only what's needed after payment
           get().fetchBalance();
@@ -524,28 +445,14 @@ const useWalletStore = create(
           throw error;
         }
       },
-
       fetchMoneyRequests: async (type = null) => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return null;
-
         set({ isLoading: true, error: null });
         try {
           const url = type
             ? `${API_URL}/transactions/requests?type=${type}`
             : `${API_URL}/transactions/requests`;
 
-          const response = await fetch(url, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.message || "Failed to fetch money requests");
-          }
+          const { data } = await fetchWithCookies(url);
 
           set({
             requests: data.requests,
@@ -561,24 +468,10 @@ const useWalletStore = create(
           return null;
         }
       },
-
       fetchUserProfile: async () => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return null;
-
         set({ isLoading: true });
         try {
-          const response = await fetch(`${API_URL}/auth/profile`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.message || "Failed to fetch user profile");
-          }
+          const { data } = await fetchWithCookies(`${API_URL}/auth/profile`);
 
           set({
             userProfile: data.user,
@@ -596,9 +489,6 @@ const useWalletStore = create(
       },
 
       fetchVerificationStatus: async () => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
-
         set({
           verificationStatus: { ...get().verificationStatus, loading: true },
         });
@@ -614,16 +504,14 @@ const useWalletStore = create(
               },
             });
             return;
-          }
-
-          // Fetch both passport and gun license verification requests
+          } // Fetch both passport and gun license verification requests
           const [passportRes, gunRes] = await Promise.all([
             fetch(`${API_URL}/verification/passport/me`, {
-              headers: { Authorization: `Bearer ${token}` },
+              credentials: "include",
             }).catch(() => ({ ok: false })),
 
             fetch(`${API_URL}/verification/gun/me`, {
-              headers: { Authorization: `Bearer ${token}` },
+              credentials: "include",
             }).catch(() => ({ ok: false })),
           ]);
 
@@ -667,27 +555,12 @@ const useWalletStore = create(
           });
         }
       },
-
       fetchUsers: async () => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return null;
-
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch(
-            `${API_URL}/transactions/users/transfer`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
+          const { data } = await fetchWithCookies(
+            `${API_URL}/transactions/users/transfer`
           );
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.message || "Failed to fetch users");
-          }
 
           set({
             users: data.users,
@@ -704,28 +577,13 @@ const useWalletStore = create(
           return null;
         }
       },
-
       searchUsers: async (searchTerm) => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return null;
-
         try {
-          const response = await fetch(
+          const { data } = await fetchWithCookies(
             `${API_URL}/transactions/users/transfer?search=${encodeURIComponent(
               searchTerm
-            )}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
+            )}`
           );
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.message || "Failed to search users");
-          }
 
           set({
             users: data.users,

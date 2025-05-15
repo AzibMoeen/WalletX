@@ -13,14 +13,12 @@ const useVerificationStore = create(
       error: null,
 
       fetchPassportVerifications: async () => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
-
         set({ isLoading: true, error: null });
         try {
           const response = await fetch(`${API_URL}/verification/passport/me`, {
+            credentials: "include",
             headers: {
-              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
             },
           });
 
@@ -48,14 +46,12 @@ const useVerificationStore = create(
 
       // Fetch gun license verifications
       fetchGunVerifications: async () => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
-
         set({ isLoading: true, error: null });
         try {
           const response = await fetch(`${API_URL}/verification/gun/me`, {
+            credentials: "include",
             headers: {
-              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
             },
           });
 
@@ -83,16 +79,11 @@ const useVerificationStore = create(
 
       // Submit passport verification
       submitPassportVerification: async (formData) => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
-
         set({ isLoading: true, error: null });
         try {
           const response = await fetch(`${API_URL}/verification/passport`, {
             method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            credentials: "include",
             body: formData,
           });
 
@@ -127,15 +118,13 @@ const useVerificationStore = create(
 
       // Submit gun license verification
       submitGunVerification: async (formData) => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
-
         set({ isLoading: true, error: null });
         try {
           const response = await fetch(`${API_URL}/verification/gun`, {
             method: "POST",
+            credentials: "include",
             headers: {
-              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
             },
             body: formData,
           });
