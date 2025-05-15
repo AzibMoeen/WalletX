@@ -208,6 +208,8 @@ const useAuthStore = create(
             user: null,
             isAuthenticated: false,
           });
+          window.location.reload(); // Reload the page to clear any session state
+          window.location.href = "/login"; // Redirect to login page
         } catch (error) {
           console.error("Error during logout:", error);
         }
