@@ -204,6 +204,10 @@ const useAuthStore = create(
             method: "POST",
             credentials: "include",
           });
+          set({
+            user: null,
+            isAuthenticated: false,
+          });
         } catch (error) {
           console.error("Error during logout:", error);
         }
