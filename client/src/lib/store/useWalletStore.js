@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { toast } from "sonner";
 import { API_BASE_URL } from "../config";
+import { fetchWithAuth } from "../authUtils";
 import {
   createPaymentIntent,
   confirmPaymentSuccess,
@@ -76,23 +77,15 @@ const useWalletStore = create(
         }),
 
       setSuccess: (value) => set({ success: value }),
-
       fetchBalance: async () => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return null;
-
         set({ isLoading: true, error: null });
         try {
-          const response = await fetch(`${API_URL}/transactions/balance`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          const { data } = await fetchWithAuth(
+            `${API_URL}/transactions/balance`
+          );
 
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.message || "Failed to fetch balance");
+          if (!data) {
+            throw new Error("Failed to fetch balance");
           }
 
           set({
@@ -109,7 +102,6 @@ const useWalletStore = create(
           return null;
         }
       },
-
       fetchTransactions: async (
         period = null,
         page = 1,
@@ -117,8 +109,6 @@ const useWalletStore = create(
         type = null
       ) => {
         let limit = 10;
-        const token = localStorage.getItem("accessToken");
-        if (!token) return null;
 
         set({ isLoading: true, error: null });
         try {
@@ -137,16 +127,10 @@ const useWalletStore = create(
             url += `&type=${type}`;
           }
 
-          const response = await fetch(url, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          const { data } = await fetchWithAuth(url);
 
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.message || "Failed to fetch transactions");
+          if (!data) {
+            throw new Error("Failed to fetch transactions");
           }
 
           const recipients = data.transactions

@@ -23,20 +23,21 @@ const ProtectedRoute = ({
   const { user, isAuthenticated, fetchUser, isLoading } = useAuthStore();
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
-
   useEffect(() => {
     let isMounted = true;
 
     const checkAuth = async () => {
       try {
-        if (!user) {
-          await fetchUser();
-        }
+        // Always fetch fresh user data from cookies
+        await fetchUser();
 
-        const currentUser = user || useAuthStore.getState().user;
+        // Get the latest user state after fetching
+        const currentUser = useAuthStore.getState().user;
+        const isAuth = useAuthStore.getState().isAuthenticated;
 
-        if (!isAuthenticated || !currentUser) {
+        if (!isAuth || !currentUser) {
           if (isMounted) {
+            // Redirect to login if not authenticated
             router.push("/login");
           }
           return;

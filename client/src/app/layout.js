@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { AuthProvider } from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +38,7 @@ export default function RootLayout({ children }) {
         suppressHydrationWarning
       >
         <ThemeProvider>
-          {children}
+          <AuthProvider>{children}</AuthProvider>
           <Analytics />
           <SpeedInsights />
           <Toaster />

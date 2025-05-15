@@ -241,14 +241,20 @@ async function Login(req, res) {
     user.refreshToken = refreshToken;
     await user.save();
 
+    // Set refresh token in HTTP-only cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production", // Only use secure in production
+      sameSite: "strict",
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
 
+    // Set access token in HTTP-only cookie
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production", // Only use secure in production
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
     });
 
     const userWithoutPassword = user.toObject();
@@ -257,7 +263,6 @@ async function Login(req, res) {
 
     res.status(200).json({
       user: userWithoutPassword,
-      accessToken,
       message: "Login successful",
     });
   } catch (error) {
@@ -268,11 +273,21 @@ async function Login(req, res) {
 
 async function Logout(req, res) {
   try {
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    // Clear cookies with same options that were used to set them
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
 
     const userId = req.user?._id;
-    console.log("hello", userId);
+    console.log("Logging out user:", userId);
 
     if (userId) {
       await User.findByIdAndUpdate(
@@ -291,7 +306,12 @@ async function Logout(req, res) {
 
 async function GetProfile(req, res) {
   try {
-    const userId = req.user._id;
+    // req.user is set by the verifyJWT middleware
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
 
     const user = await User.findById(userId).select("-password -refreshToken");
 

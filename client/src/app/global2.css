@@ -168,9 +168,6 @@
 @layer components {
 
     /* Button with gradient */
-    .btn-gradient {
-        @apply bg-gradient-to-r from-[color:var(--gradient-from)] to-[color:var(--gradient-to)] hover:from-[color:var(--gradient-hover-from)] hover:to-[color:var(--gradient-hover-to)] text-white font-semibold rounded-md transition-all;
-    }
 
     /* Input Date Styling */
     .input-date-right::-webkit-calendar-picker-indicator {

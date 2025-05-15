@@ -6,7 +6,6 @@ const useAuthStore = create(
   persist(
     (set, get) => ({
       user: null,
-      accessToken: null,
       isAuthenticated: false,
       isLoading: false,
       error: null,
@@ -21,6 +20,7 @@ const useAuthStore = create(
               "Content-Type": "application/json",
             },
             body: JSON.stringify(credentials),
+            credentials: "include", // This ensures cookies are sent and stored
           });
 
           const data = await response.json();
@@ -29,12 +29,8 @@ const useAuthStore = create(
             throw new Error(data.message || "Login failed");
           }
 
-          localStorage.setItem("accessToken", data.accessToken);
-          localStorage.setItem("user", JSON.stringify(data.user));
-
           set({
             user: data.user,
-            accessToken: data.accessToken,
             isAuthenticated: true,
             isLoading: false,
           });
@@ -58,6 +54,7 @@ const useAuthStore = create(
               "Content-Type": "application/json",
             },
             body: JSON.stringify(userData),
+            credentials: "include",
           });
 
           const data = await response.json();
@@ -91,6 +88,7 @@ const useAuthStore = create(
                 "Content-Type": "application/json",
               },
               body: JSON.stringify(userData),
+              credentials: "include",
             }
           );
 
@@ -128,6 +126,7 @@ const useAuthStore = create(
                 "Content-Type": "application/json",
               },
               body: JSON.stringify(verificationData),
+              credentials: "include",
             }
           );
 
@@ -153,67 +152,65 @@ const useAuthStore = create(
       },
 
       fetchUser: async () => {
-        if (get().accessToken && get().user) {
+        // If we already have user data, no need to fetch again
+        if (get().isAuthenticated && get().user) {
           return;
-        }
-
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-          set({ user: null, isAuthenticated: false, accessToken: null });
-          localStorage.removeItem("user");
-          return;
-        }
-
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          try {
-            const userData = JSON.parse(storedUser);
-            set({
-              user: userData,
-              isAuthenticated: true,
-              accessToken: token,
-            });
-            return;
-          } catch (e) {}
         }
 
         set({ isLoading: true, error: null });
         try {
           const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            credentials: "include", // This will send the cookies
           });
 
-          const data = await response.json();
-
           if (!response.ok) {
+            // If unauthorized or other error, clear user state
+            if (response.status === 401) {
+              set({
+                user: null,
+                isAuthenticated: false,
+                isLoading: false,
+              });
+              return;
+            }
+            const data = await response.json();
             throw new Error(data.message || "Failed to fetch user");
           }
 
-          localStorage.setItem("user", JSON.stringify(data.user));
+          const data = await response.json();
 
           set({
             user: data.user,
             isAuthenticated: true,
             isLoading: false,
-            accessToken: token,
           });
+
+          return data;
         } catch (error) {
           console.error("Error fetching user profile:", error);
           set({
             isLoading: false,
             error: error.message,
+            user: null,
+            isAuthenticated: false,
           });
         }
       },
 
-      logout: () => {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("user");
+      logout: async () => {
+        try {
+          // Call the logout endpoint to clear the cookie
+          await fetch(`${API_BASE_URL}/api/auth/logout`, {
+            method: "POST",
+            credentials: "include",
+          });
+        } catch (error) {
+          console.error("Error during logout:", error);
+        }
+
+        // Clear the state regardless of the API call result
         set({
           user: null,
-          accessToken: null,
           isAuthenticated: false,
         });
       },
@@ -231,7 +228,6 @@ const useAuthStore = create(
       name: "auth-storage",
       partialize: (state) => ({
         user: state.user,
-        accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
         verificationEmail: state.verificationEmail,
       }),

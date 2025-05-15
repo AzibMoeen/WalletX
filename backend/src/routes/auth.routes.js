@@ -12,6 +12,7 @@ import {
   UpdateProfilePicture,
   ChangePassword,
 } from "../controllers/userAuth.controllers.js";
+import { refreshAccessToken } from "../controllers/refreshToken.controller.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
 
@@ -29,6 +30,7 @@ router.post("/reset-password", ResetPassword);
 router.post("/register", Register);
 router.post("/login", Login);
 router.post("/logout", verifyJWT, Logout);
+router.post("/refresh-token", refreshAccessToken);
 router.get("/profile", verifyJWT, GetProfile);
 // Add the /me endpoint as an alias to /profile for frontend compatibility
 router.get("/me", verifyJWT, GetProfile);
