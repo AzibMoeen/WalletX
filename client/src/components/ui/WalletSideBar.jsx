@@ -53,7 +53,6 @@ function WalletSidebarInner({ children }) {
       logout();
 
       // Use Next.js router for navigation
-      router.push("/login");
     } catch (error) {
       console.error("Error during logout:", error);
       router.push("/login");

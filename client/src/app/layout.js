@@ -38,7 +38,7 @@ export default function RootLayout({ children }) {
         suppressHydrationWarning
       >
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          {children}
           <Analytics />
           <SpeedInsights />
           <Toaster />

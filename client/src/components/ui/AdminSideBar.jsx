@@ -28,7 +28,7 @@ export default function AdminSideBar({ children }) {
   const handleLogout = async () => {
     try {
       await logout();
-      router.push("/login"); // Redirect to login page after logout
+      // Redirect to login page after logout
     } catch (error) {
       console.error("Logout failed:", error);
       // Handle error (e.g., show a notification)
