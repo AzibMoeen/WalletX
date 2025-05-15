@@ -4,7 +4,6 @@ import { User } from "../models/user.model.js";
 const verifyJWT = async (req, res, next) => {
   try {
     let token = null;
-    console.loh(res.cookies);
     if (req.cookies?.accessToken) {
       token = req.cookies.accessToken;
     } else if (req.headers.authorization) {
