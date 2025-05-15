@@ -150,14 +150,13 @@ export default function ExchangePage() {
         throw new Error(`Insufficient ${fromCurrency} balance`);
       }
 
-      const token = localStorage.getItem("accessToken");
       const response = await fetch(
         "https://walletx-production.up.railway.app/api/transactions/exchange",
         {
           method: "POST",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             fromCurrency,

@@ -38,6 +38,7 @@ export const confirmPaymentSuccess = async (
     `${API_BASE_URL}/api/transactions/stripe/payment-success`,
     {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,

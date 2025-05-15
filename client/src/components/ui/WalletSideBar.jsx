@@ -49,10 +49,8 @@ function WalletSidebarInner({ children }) {
 
   const handleLogout = async () => {
     try {
-      // Use the logout method from auth store
       logout();
 
-      // Use Next.js router for navigation
     } catch (error) {
       console.error("Error during logout:", error);
       router.push("/login");
