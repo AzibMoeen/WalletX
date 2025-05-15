@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
+
+
 // Component that safely uses useSearchParams inside Suspense
 function LoginContent() {
   const [serverError, setServerError] = useState("");

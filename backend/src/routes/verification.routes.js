@@ -16,4 +16,6 @@ router.post("/gun", verifyJWT, upload.single('gunImage'), submitGunVerification)
 router.get("/passport/me", verifyJWT, getUserPassportVerifications);
 router.get("/gun/me", verifyJWT, getUserGunVerifications);
 
+
+
 export default router;
