@@ -65,7 +65,6 @@ const ProfilePictureSection = ({ user, setUser }) => {
         {
           method: "POST",
           credentials: "include",
-          credentials: "include",
           body: formData,
         }
       );

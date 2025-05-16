@@ -9,7 +9,7 @@ const useAuthStore = create(
       isAuthenticated: false,
       isLoading: false,
       error: null,
-      verificationEmail: null, // Track email being verified
+      verificationEmail: null, 
 
       login: async (credentials) => {
         set({ isLoading: true, error: null });
@@ -20,7 +20,7 @@ const useAuthStore = create(
               "Content-Type": "application/json",
             },
             body: JSON.stringify(credentials),
-            credentials: "include", // This ensures cookies are sent and stored
+            credentials: "include", 
           });
 
           const data = await response.json();
@@ -152,7 +152,6 @@ const useAuthStore = create(
       },
 
       fetchUser: async () => {
-        // If we already have user data, no need to fetch again
         if (get().isAuthenticated && get().user) {
           return;
         }
@@ -208,13 +207,9 @@ const useAuthStore = create(
             user: null,
             isAuthenticated: false,
           });
-          // Reload the page to clear any session state
-          // Redirect to login page
         } catch (error) {
           console.error("Error during logout:", error);
         }
-
-        // Clear the state regardless of the API call result
         set({
           user: null,
           isAuthenticated: false,
@@ -223,7 +218,6 @@ const useAuthStore = create(
 
       clearError: () => set({ error: null }),
 
-      // Set user data (used for updates)
       setUser: (userData) => {
         set({
           user: userData,

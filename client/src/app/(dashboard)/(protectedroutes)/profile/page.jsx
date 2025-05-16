@@ -59,12 +59,11 @@ const ProfilePage = () => {
     setUpdateError("");
 
     try {
-      const token = localStorage.getItem("accessToken");
       const response = await fetch(`${API_URL}/api/auth/profile/update`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });
