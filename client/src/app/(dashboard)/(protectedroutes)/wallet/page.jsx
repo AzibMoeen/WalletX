@@ -59,10 +59,9 @@ export default function WalletPage() {
   const handleSelectChange = (name, value) => {
     setFormData({ [name]: value });
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSuccess(false);
+    setSuccess("transfer", false);
 
     try {
       // Validate form

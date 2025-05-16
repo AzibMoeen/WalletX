@@ -64,9 +64,8 @@ const ProfilePictureSection = ({ user, setUser }) => {
         `${API_URL}/api/auth/profile/update-picture`,
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
+          credentials: "include",
           body: formData,
         }
       );

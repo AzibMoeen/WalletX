@@ -103,7 +103,7 @@ export default function RequestPage() {
     e.preventDefault();
     clearLocalError();
     setLocalSuccess(false);
-    setStoreSuccess(false);
+    setStoreSuccess("request", false);
 
     try {
       // Validate form
@@ -113,9 +113,7 @@ export default function RequestPage() {
 
       if (!formData.amount || parseFloat(formData.amount) <= 0) {
         throw new Error("Please enter a valid amount");
-      }
-
-      // Make request using the store method
+      } // Make request using the store method
       await requestMoney({
         targetEmail: formData.targetEmail,
         amount: parseFloat(formData.amount),
@@ -124,6 +122,7 @@ export default function RequestPage() {
       });
 
       setLocalSuccess(true);
+      // Note: The setSuccess('request', true) is already being set in the requestMoney function
 
       // Reset form
       setFormData({

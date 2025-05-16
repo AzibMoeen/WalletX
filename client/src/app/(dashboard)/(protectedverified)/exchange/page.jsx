@@ -135,7 +135,7 @@ export default function ExchangePage() {
     setLocalLoading(true);
     setLocalError("");
     setLocalSuccess(false);
-    setStoreSuccess(false);
+    setStoreSuccess("exchange", false);
 
     try {
       // Validate form
@@ -173,8 +173,8 @@ export default function ExchangePage() {
 
       // Update wallet balance
       await fetchBalance();
-
       setLocalSuccess(true);
+      setStoreSuccess("exchange", true); // Set operation-specific success state
 
       // Add the exchange to history
       setExchangeHistory((prev) => [

@@ -70,6 +70,15 @@ const useWalletStore = create(
       isLoading: false,
       error: null,
       success: false,
+      // Operation-specific success states
+      successStates: {
+        deposit: false,
+        withdraw: false,
+        transfer: false,
+        exchange: false,
+        request: false,
+        payRequest: false,
+      },
       stats: null,
       pagination: {
         total: 0,
@@ -82,9 +91,8 @@ const useWalletStore = create(
         set((state) => ({
           formData: { ...state.formData, ...data },
         })),
-
       resetForm: () =>
-        set({
+        set((state) => ({
           formData: {
             recipientId: "",
             recipientEmail: "",
@@ -92,10 +100,41 @@ const useWalletStore = create(
             currency: "USD",
             note: "",
           },
-          success: false,
-        }),
+          successStates: Object.keys(state.successStates).reduce((acc, key) => {
+            acc[key] = false;
+            return acc;
+          }, {}),
+        })),
 
-      setSuccess: (value) => set({ success: value }),
+      setSuccess: (operation, value) => {
+        if (operation) {
+          // Set a specific operation success state
+          set((state) => ({
+            successStates: {
+              ...state.successStates,
+              [operation]: value,
+            },
+            // Maintain backward compatibility
+            success: value,
+          }));
+        } else {
+          // For backward compatibility, set all success states to the same value
+          set((state) => ({
+            successStates: Object.keys(state.successStates).reduce(
+              (acc, key) => {
+                acc[key] = value;
+                return acc;
+              },
+              {}
+            ),
+            success: value,
+          }));
+        }
+      },
+
+      // Helper to check if any operation was successful
+      hasSuccess: () =>
+        Object.values(get().successStates).some((value) => value === true),
       fetchBalance: async () => {
         set({ isLoading: true, error: null });
         try {
@@ -182,39 +221,6 @@ const useWalletStore = create(
           return null;
         }
       },
-      fetchStripeTransactionHistory: async (
-        limit = 100,
-        startingAfter = null,
-        endingBefore = null
-      ) => {
-        set({ isLoading: true, error: null });
-        try {
-          let url = `${API_URL}/transactions/stripe/transaction-history?limit=${limit}`;
-
-          if (startingAfter) {
-            url += `&starting_after=${startingAfter}`;
-          }
-
-          if (endingBefore) {
-            url += `&ending_before=${endingBefore}`;
-          }
-
-          const { data } = await fetchWithCookies(url);
-
-          set({
-            isLoading: false,
-          });
-
-          return data;
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error.message,
-          });
-          toast.error(error.message || "Failed to fetch Stripe transactions");
-          return null;
-        }
-      },
       transferFunds: async (transferData) => {
         set({ isLoading: true, error: null });
         try {
@@ -236,20 +242,29 @@ const useWalletStore = create(
             );
 
             data = responseData;
-          }
-
-          // Only update balance after transfer, don't fetch transactions
+          } // Only update balance after transfer, don't fetch transactions
           get().fetchBalance();
 
-          set({ isLoading: false, success: true });
+          set((state) => ({
+            isLoading: false,
+            success: true,
+            successStates: {
+              ...state.successStates,
+              transfer: true,
+            },
+          }));
           toast.success("Money sent successfully via Stripe");
           return data;
         } catch (error) {
-          set({
+          set((state) => ({
             isLoading: false,
             error: error.message,
             success: false,
-          });
+            successStates: {
+              ...state.successStates,
+              transfer: false,
+            },
+          }));
           toast.error(error.message || "Failed to send money");
           throw error;
         }
@@ -300,26 +315,7 @@ const useWalletStore = create(
                 throw new Error("Missing Stripe payment information");
               }
             } catch (stripeError) {
-              console.log(
-                "⚠️ Stripe error detected, falling back to simulation:",
-                stripeError.message
-              ); // Fall back to simulated deposit
-              const { data: responseData } = await fetchWithCookies(
-                `${API_URL}/transactions/simulate-deposit`,
-                {
-                  method: "POST",
-                  body: JSON.stringify({
-                    amount: depositData.amount,
-                    currency: depositData.currency,
-                    cardDetails: {
-                      cardholderName:
-                        depositData.userInfo?.cardholderName || "Test User",
-                      cardNumber: "************4242",
-                    },
-                  }),
-                }
-              );
-              data = responseData;
+              console.log("error");
             }
           } else {
             // Use standard API for deposit
@@ -354,20 +350,29 @@ const useWalletStore = create(
               );
               data = responseData;
             }
-          }
-
-          // Only update balance after deposit, don't fetch transactions
+          } // Only update balance after deposit, don't fetch transactions
           get().fetchBalance();
 
-          set({ isLoading: false, success: true });
+          set((state) => ({
+            isLoading: false,
+            success: true,
+            successStates: {
+              ...state.successStates,
+              deposit: true,
+            },
+          }));
           toast.success("Funds deposited successfully");
           return data;
         } catch (error) {
-          set({
+          set((state) => ({
             isLoading: false,
             error: error.message,
             success: false,
-          });
+            successStates: {
+              ...state.successStates,
+              deposit: false,
+            },
+          }));
           toast.error(error.message || "Failed to deposit funds");
           throw error;
         }
@@ -400,18 +405,28 @@ const useWalletStore = create(
             );
             data = responseData;
           }
-
           get().fetchMoneyRequests();
 
-          set({ isLoading: false, success: true });
+          set((state) => ({
+            isLoading: false,
+            success: true,
+            successStates: {
+              ...state.successStates,
+              request: true,
+            },
+          }));
           toast.success("Money request sent successfully");
           return data;
         } catch (error) {
-          set({
+          set((state) => ({
             isLoading: false,
             error: error.message,
             success: false,
-          });
+            successStates: {
+              ...state.successStates,
+              request: false,
+            },
+          }));
           toast.error(error.message || "Failed to send money request");
           throw error;
         }
@@ -426,21 +441,30 @@ const useWalletStore = create(
           const { data } = await fetchWithCookies(url, {
             method: "POST",
             body: JSON.stringify({ requestId }),
-          });
-
-          // Update only what's needed after payment
+          }); // Update only what's needed after payment
           get().fetchBalance();
           get().fetchMoneyRequests();
 
-          set({ isLoading: false, success: true });
+          set((state) => ({
+            isLoading: false,
+            success: true,
+            successStates: {
+              ...state.successStates,
+              payRequest: true,
+            },
+          }));
           toast.success("Request paid successfully");
           return data;
         } catch (error) {
-          set({
+          set((state) => ({
             isLoading: false,
             error: error.message,
             success: false,
-          });
+            successStates: {
+              ...state.successStates,
+              payRequest: false,
+            },
+          }));
           toast.error(error.message || "Failed to pay request");
           throw error;
         }

@@ -109,7 +109,7 @@ export default function DepositPage() {
   const handleSubmit = async (formData) => {
     setLocalLoading(true);
     setLocalError("");
-    setSuccess(false);
+    setSuccess("deposit", false);
     try {
       // Validate amount
       if (!formData.amount || parseFloat(formData.amount) <= 0) {

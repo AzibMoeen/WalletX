@@ -81,7 +81,7 @@ export default function WithdrawPage() {
     setLocalLoading(true);
     setLocalError("");
     setLocalSuccess(false);
-    setStoreSuccess(false);
+    setStoreSuccess("withdraw", false); // Use operation-specific success state
 
     try {
       // Validate form
@@ -147,12 +147,11 @@ export default function WithdrawPage() {
         throw new Error(
           response.error || response.message || "Failed to process withdrawal"
         );
-      }
-
-      // Update wallet balance
+      } // Update wallet balance
       await fetchBalance();
 
       setLocalSuccess(true);
+      setStoreSuccess("withdraw", true); // Set operation-specific success state
 
       // Add the withdrawal to history
       setWithdrawalHistory((prev) => [

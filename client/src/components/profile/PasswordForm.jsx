@@ -36,14 +36,13 @@ const PasswordForm = () => {
     setPasswordError("");
 
     try {
-      const token = localStorage.getItem("accessToken");
       const response = await fetch(
         `${API_URL}/api/auth/profile/change-password`,
         {
+          credentials: "include",
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             currentPassword: data.currentPassword,
