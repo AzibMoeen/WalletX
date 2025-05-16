@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 
 export default function CTASection() {
   return (
-    <section className="py-16 bg-gradient-to-r from-purple-600 to-indigo-600">
+    <section className="py-16 bg-gradient-to-r from-primary to-secondary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="text-3xl font-bold text-white mb-6">
+        <h2 className="text-3xl font-bold text-primary-foreground mb-6">
           Ready to get started with WalletX?
         </h2>
-        <p className="text-xl text-purple-100 mb-10 max-w-2xl mx-auto">
+        <p className="text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto">
           Join thousands of users who trust WalletX for their digital payment
           needs.
         </p>
@@ -18,7 +18,7 @@ export default function CTASection() {
           <Link href="/register">
             <Button
               size="lg"
-              className="cursor-pointer px-8 py-3 bg-white text-purple-600 hover:bg-gray-100"
+              className="cursor-pointer px-8 py-3 bg-card text-primary hover:bg-card/90"
             >
               Sign Up Now
             </Button>
@@ -26,7 +26,7 @@ export default function CTASection() {
           <Link href="/login">
             <Button
               size="lg"
-              className=" cursor-pointer px-8 py-3 bg-white text-purple-600 hover:bg-gray-100"
+              className="cursor-pointer px-8 py-3 bg-card text-primary hover:bg-card/90"
             >
               Log In
             </Button>

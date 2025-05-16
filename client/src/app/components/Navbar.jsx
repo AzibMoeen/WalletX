@@ -57,7 +57,7 @@ export default function Navbar() {
             <ThemeToggle />
             {isAuthenticated ? (
               <Link href="/wallet">
-                <Button className="bg-gradient-to-r cursor-pointer from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white">
+                <Button className="bg-gradient-to-r cursor-pointer from-primary to-secondary hover:from-primary-darker hover:to-secondary-darker text-primary-foreground">
                   Wallet
                 </Button>
               </Link>
@@ -66,13 +66,13 @@ export default function Navbar() {
                 <Link href="/login">
                   <Button
                     variant="outline"
-                    className="border-purple-600 text-purple-600 hover:bg-purple-50"
+                    className="border-primary text-primary hover:bg-primary/10"
                   >
                     Log In
                   </Button>
                 </Link>
                 <Link href="/register">
-                  <Button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white">
+                  <Button className="bg-gradient-to-r from-primary to-secondary hover:from-primary-darker hover:to-secondary-darker text-primary-foreground">
                     Sign Up
                   </Button>
                 </Link>
@@ -124,7 +124,7 @@ export default function Navbar() {
             <div className="mt-4 space-y-2 px-3">
               {isAuthenticated ? (
                 <Link href="/wallet">
-                  <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
+                  <Button className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary-darker hover:to-secondary-darker text-primary-foreground">
                     Dashboard
                   </Button>
                 </Link>
@@ -133,13 +133,13 @@ export default function Navbar() {
                   <Link href="/login">
                     <Button
                       variant="outline"
-                      className="w-full border-purple-600 text-purple-600"
+                      className="w-full border-primary text-primary"
                     >
                       Log In
                     </Button>
                   </Link>
                   <Link href="/register">
-                    <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
+                    <Button className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary-darker hover:to-secondary-darker text-primary-foreground">
                       Sign Up
                     </Button>
                   </Link>
