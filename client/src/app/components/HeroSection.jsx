@@ -60,7 +60,7 @@ export default function HeroSection() {
               </div>
               <div className="relative aspect-[16/9] bg-gradient-to-br from-primary to-secondary">
                 <Image
-                  src="/image.jpeg"
+                  src="/Img.jpeg"
                   alt="WalletX Dashboard Preview"
                   fill
                   priority
