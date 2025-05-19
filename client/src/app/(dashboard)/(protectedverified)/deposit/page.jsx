@@ -31,10 +31,11 @@ export default function DepositPage() {
   const [depositMethod, setDepositMethod] = useState("card");
   const {
     wallet,
+    isWalletLoaded,
     isLoading: storeLoading,
     error: storeError,
     success,
-    fetchBalance,
+    fetchWallet,
     depositFunds,
     createPaymentIntent,
     getBalanceDisplay,
@@ -57,13 +58,15 @@ export default function DepositPage() {
   });
   useEffect(() => {
     const loadData = async () => {
-      await fetchBalance();
+      if (!isWalletLoaded) {
+        await fetchWallet();
+      }
       await fetchRecentDeposits();
       setIsDataLoaded(true);
     };
 
     loadData();
-  }, [fetchBalance]);
+  }, [fetchWallet, isWalletLoaded]);
 
   const fetchRecentDeposits = async () => {
     try {

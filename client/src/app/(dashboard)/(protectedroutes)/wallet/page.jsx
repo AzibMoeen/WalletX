@@ -21,6 +21,7 @@ export default function WalletPage() {
 
   const {
     wallet,
+    isWalletLoaded,
     userProfile,
     users,
     formData,
@@ -45,11 +46,13 @@ export default function WalletPage() {
 
   useEffect(() => {
     const loadData = async () => {
-      await initializeWallet();
+      if (!isWalletLoaded) {
+        await initializeWallet();
+      }
       setIsDataLoaded(true);
     };
     loadData();
-  }, [initializeWallet]);
+  }, [initializeWallet, isWalletLoaded]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

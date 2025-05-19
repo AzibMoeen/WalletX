@@ -4,6 +4,7 @@
  * @param {object} options - Fetch options
  * @returns {Promise} - Fetch promise with parsed JSON response or error
  */
+import { API_BASE_URL } from "./config";
 export const fetchWithAuth = async (url, options = {}) => {
   // Add credentials to include cookies in the request
   const fetchOptions = {
@@ -61,7 +62,7 @@ export const fetchWithAuth = async (url, options = {}) => {
 export const refreshAccessToken = async () => {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh-token`,
+      `${API_BASE_URL}/api/auth/refresh-token`,
       {
         method: "POST",
         credentials: "include",
@@ -72,9 +73,60 @@ export const refreshAccessToken = async () => {
       return true;
     }
 
+    // If refresh token is invalid or expired, clear any stored auth state
+    if (response.status === 401) {
+      // Clear any stored auth state
+      if (typeof window !== 'undefined') {
+        // Clear any stored auth state in localStorage if needed
+        localStorage.removeItem('auth-storage');
+      }
+    }
+
     return false;
   } catch (error) {
     console.error("Error refreshing token:", error);
     return false;
+  }
+};
+
+/**
+ * Utility to check if a token is expired
+ * @param {string} token - JWT token to check
+ * @returns {boolean} - Whether the token is expired
+ */
+export const isTokenExpired = (token) => {
+  if (!token) return true;
+  
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp * 1000 < Date.now();
+  } catch (error) {
+    console.error('Error checking token expiration:', error);
+    return true;
+  }
+};
+
+/**
+ * Utility to handle token refresh and retry logic
+ * @param {Function} apiCall - The API call function to retry
+ * @param {number} maxRetries - Maximum number of retry attempts
+ * @returns {Promise} - The API call result
+ */
+export const withTokenRefresh = async (apiCall, maxRetries = 1) => {
+  let retries = 0;
+  
+  while (retries <= maxRetries) {
+    try {
+      return await apiCall();
+    } catch (error) {
+      if (error.message === 'Authentication failed' && retries < maxRetries) {
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+          retries++;
+          continue;
+        }
+      }
+      throw error;
+    }
   }
 };

@@ -157,7 +157,8 @@ const BankDepositForm = ({
                   </div>
                   <Input
                     id="amount"
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="0.00"
                     className={`pl-8 h-10 ${
                       errors.amount ? "border-red-500" : ""
@@ -172,8 +173,9 @@ const BankDepositForm = ({
                         value: 0.01,
                         message: "Amount must be greater than 0",
                       },
+                      setValueAs: (value) =>
+                        parseFloat(parseFloat(value).toFixed(2)),
                     })}
-                    step="0.01"
                   />
                 </div>
                 <Controller

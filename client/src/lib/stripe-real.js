@@ -1,6 +1,8 @@
 // Real Stripe integration using the official Stripe.js library
 import { loadStripe } from "@stripe/stripe-js";
 import { API_BASE_URL } from "./config";
+import { fetchWithAuth } from "./authUtils";
+import useWalletStore from "./store/useWalletStore";
 
 // Load the real Stripe instance with your publishable key
 // Using the client's actual test key
@@ -8,7 +10,6 @@ const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 );
 
-// Helper for backend API calls related to payment intents
 export const createPaymentIntent = async (amount, currency) => {
   const response = await fetch(
     `${API_BASE_URL}/api/transactions/stripe/create-payment-intent`,
@@ -105,36 +106,46 @@ export const createStripePaymentRequest = async (requestData) => {
 
 // Standard bank withdrawal through Stripe
 export const createBankWithdrawal = async (withdrawalData) => {
-  const response = await fetch(
-    `${API_BASE_URL}/api/transactions/stripe/withdraw`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      },
-      body: JSON.stringify(withdrawalData),
-    }
-  );
+  try {
+    const { data } = await fetchWithAuth(
+      `${API_BASE_URL}/api/transactions/stripe/withdraw`,
+      {
+        method: "POST",
+        body: JSON.stringify(withdrawalData),
+      }
+    );
 
-  return response.json();
+    // Update wallet balance after successful withdrawal
+    const store = useWalletStore.getState();
+    await store.updateWalletAfterTransaction();
+
+    return data;
+  } catch (error) {
+    console.error("Error in createBankWithdrawal:", error);
+    throw error;
+  }
 };
 
 // Instant card withdrawal through Stripe
 export const createCardWithdrawal = async (withdrawalData) => {
-  const response = await fetch(
-    `${API_BASE_URL}/api/transactions/stripe/instant-withdraw`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      },
-      body: JSON.stringify(withdrawalData),
-    }
-  );
+  try {
+    const { data } = await fetchWithAuth(
+      `${API_BASE_URL}/api/transactions/stripe/instant-withdraw`,
+      {
+        method: "POST",
+        body: JSON.stringify(withdrawalData),
+      }
+    );
 
-  return response.json();
+    // Update wallet balance after successful withdrawal
+    const store = useWalletStore.getState();
+    await store.updateWalletAfterTransaction();
+
+    return data;
+  } catch (error) {
+    console.error("Error in createCardWithdrawal:", error);
+    throw error;
+  }
 };
 
 // Get available withdrawal methods from the connected Stripe account

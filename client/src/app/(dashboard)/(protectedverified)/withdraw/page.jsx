@@ -28,10 +28,11 @@ export default function WithdrawPage() {
   const router = useRouter();
   const {
     wallet,
+    isWalletLoaded,
     isLoading: storeLoading,
     error: storeError,
     success: storeSuccess,
-    fetchBalance,
+    fetchWallet,
     getBalanceDisplay,
     getCurrencySymbol,
     setSuccess: setStoreSuccess,
@@ -42,15 +43,18 @@ export default function WithdrawPage() {
   const [localError, setLocalError] = useState("");
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+
   useEffect(() => {
     const loadData = async () => {
-      await fetchBalance();
+      if (!isWalletLoaded) {
+        await fetchWallet();
+      }
       await fetchWithdrawalHistory();
       setIsDataLoaded(true);
     };
 
     loadData();
-  }, [fetchBalance]);
+  }, [fetchWallet, isWalletLoaded]);
 
   const fetchWithdrawalHistory = () => {
     setWithdrawalHistory([
@@ -148,7 +152,7 @@ export default function WithdrawPage() {
           response.error || response.message || "Failed to process withdrawal"
         );
       } // Update wallet balance
-      await fetchBalance();
+      await fetchWallet();
 
       setLocalSuccess(true);
       setStoreSuccess("withdraw", true); // Set operation-specific success state

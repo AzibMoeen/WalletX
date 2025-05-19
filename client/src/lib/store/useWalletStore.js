@@ -1,11 +1,9 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { toast } from "sonner";
 import { API_BASE_URL } from "../config";
+import { fetchWithAuth, withTokenRefresh } from "../authUtils";
 import {
-  createPaymentIntent,
   confirmPaymentSuccess,
-  createStripeTransfer,
   createStripePaymentRequest,
   createStripeUserTransfer,
 } from "../stripe-real";
@@ -24,42 +22,55 @@ const exchangeRates = {
 
 const API_URL = `${API_BASE_URL}/api`;
 
-// Helper function to replace fetchWithAuth
-const fetchWithCookies = async (url, options = {}) => {
-  const response = await fetch(url, {
-    ...options,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
+const useWalletStore = create((set, get) => ({
+  // State
+  wallet: { balances: [], walletId: "" },
+  transactions: [],
+  recentRecipients: [],
+  requests: [],
+  users: [],
+  userProfile: { email: "", fullname: "", verified: false },
+  isUsersFetched: false,
+  isWalletLoaded: false,
+  verificationStatus: {
+    isVerified: false,
+    pendingRequests: [],
+    loading: true,
+  },
+  formData: {
+    recipientId: "",
+    recipientEmail: "",
+    amount: "",
+    currency: "USD",
+    note: "",
+  },
+  isLoading: false,
+  error: null,
+  success: false,
+  // Operation-specific success states
+  successStates: {
+    deposit: false,
+    withdraw: false,
+    transfer: false,
+    exchange: false,
+    request: false,
+    payRequest: false,
+  },
+  stats: null,
+  pagination: {
+    total: 0,
+    page: 1,
+    pages: 1,
+    limit: 20,
+  },
 
-  const data = await response.json();
+  setFormData: (data) =>
+    set((state) => ({
+      formData: { ...state.formData, ...data },
+    })),
 
-  if (!response.ok) {
-    throw new Error(data.message || "API request failed");
-  }
-
-  return { data };
-};
-
-const useWalletStore = create(
-  persist(
-    (set, get) => ({
-      // State
-      wallet: { balances: [], walletId: "" },
-      transactions: [],
-      recentRecipients: [],
-      requests: [],
-      users: [],
-      userProfile: { email: "", fullname: "", verified: false },
-      isUsersFetched: false,
-      verificationStatus: {
-        isVerified: false,
-        pendingRequests: [],
-        loading: true,
-      },
+  resetForm: () =>
+    set((state) => ({
       formData: {
         recipientId: "",
         recipientEmail: "",
@@ -67,638 +78,633 @@ const useWalletStore = create(
         currency: "USD",
         note: "",
       },
-      isLoading: false,
-      error: null,
-      success: false,
-      // Operation-specific success states
-      successStates: {
-        deposit: false,
-        withdraw: false,
-        transfer: false,
-        exchange: false,
-        request: false,
-        payRequest: false,
-      },
-      stats: null,
-      pagination: {
-        total: 0,
-        page: 1,
-        pages: 1,
-        limit: 20,
-      },
+      successStates: Object.keys(state.successStates).reduce((acc, key) => {
+        acc[key] = false;
+        return acc;
+      }, {}),
+    })),
 
-      setFormData: (data) =>
-        set((state) => ({
-          formData: { ...state.formData, ...data },
-        })),
-      resetForm: () =>
-        set((state) => ({
-          formData: {
-            recipientId: "",
-            recipientEmail: "",
-            amount: "",
-            currency: "USD",
-            note: "",
-          },
-          successStates: Object.keys(state.successStates).reduce((acc, key) => {
-            acc[key] = false;
+  fetchWallet: async () => {
+    if (get().isWalletLoaded) {
+      return get().wallet;
+    }
+
+    set({ isLoading: true, error: null });
+    try {
+      const { data } = await withTokenRefresh(async () =>
+        fetchWithAuth(`${API_URL}/transactions/balance`)
+      );
+
+      set({
+        wallet: data.wallet,
+        isLoading: false,
+        isWalletLoaded: true
+      });
+
+      return data;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error.message,
+        isWalletLoaded: false
+      });
+      throw error;
+    }
+  },
+
+  fetchTransactions: async (params = {}) => {
+    set({ isLoading: true, error: null });
+    try {
+      const queryParams = new URLSearchParams(params);
+      const { data } = await withTokenRefresh(async () =>
+        fetchWithAuth(`${API_URL}/transactions?${queryParams}`)
+      );
+
+      set({
+        transactions: data.transactions,
+        pagination: data.pagination,
+        isLoading: false,
+      });
+
+      return data;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error.message,
+      });
+      throw error;
+    }
+  },
+
+  setSuccess: (operation, value) => {
+    if (operation) {
+      // Set a specific operation success state
+      set((state) => ({
+        successStates: {
+          ...state.successStates,
+          [operation]: value,
+        },
+        // Maintain backward compatibility
+        success: value,
+      }));
+    } else {
+      // For backward compatibility, set all success states to the same value
+      set((state) => ({
+        successStates: Object.keys(state.successStates).reduce(
+          (acc, key) => {
+            acc[key] = value;
             return acc;
-          }, {}),
-        })),
+          },
+          {}
+        ),
+        success: value,
+      }));
+    }
+  },
 
-      setSuccess: (operation, value) => {
-        if (operation) {
-          // Set a specific operation success state
-          set((state) => ({
-            successStates: {
-              ...state.successStates,
-              [operation]: value,
-            },
-            // Maintain backward compatibility
-            success: value,
-          }));
-        } else {
-          // For backward compatibility, set all success states to the same value
-          set((state) => ({
-            successStates: Object.keys(state.successStates).reduce(
-              (acc, key) => {
-                acc[key] = value;
-                return acc;
-              },
-              {}
-            ),
-            success: value,
-          }));
+  // Helper to check if any operation was successful
+  hasSuccess: () =>
+    Object.values(get().successStates).some((value) => value === true),
+
+  // Add a new function to update wallet after transactions
+  updateWalletAfterTransaction: async () => {
+    try {
+      const { data } = await withTokenRefresh(async () =>
+        fetchWithAuth(`${API_URL}/transactions/balance`)
+      );
+
+      set({
+        wallet: data.wallet,
+        isWalletLoaded: true
+      });
+
+      return data;
+    } catch (error) {
+      console.error("Error updating wallet:", error);
+      throw error;
+    }
+  },
+
+  // Update transferFunds to refresh wallet after transfer
+  transferFunds: async (transferData) => {
+    set({ isLoading: true, error: null });
+    try {
+      let data;
+
+      if (transferData.paymentMethodId) {
+        data = await createStripeUserTransfer(transferData);
+      } else {
+        const { data: responseData } = await fetchWithAuth(
+          `${API_URL}/transactions/send`,
+          {
+            method: "POST",
+            body: JSON.stringify(transferData),
+          }
+        );
+        data = responseData;
+      }
+
+      // Update wallet after successful transfer
+      await get().updateWalletAfterTransaction();
+
+      set((state) => ({
+        isLoading: false,
+        success: true,
+        successStates: {
+          ...state.successStates,
+          transfer: true,
+        },
+      }));
+      toast.success("Money sent successfully via Stripe");
+      return data;
+    } catch (error) {
+      set((state) => ({
+        isLoading: false,
+        error: error.message,
+        success: false,
+        successStates: {
+          ...state.successStates,
+          transfer: false,
+        },
+      }));
+      toast.error(error.message || "Failed to send money");
+      throw error;
+    }
+  },
+
+  createPaymentIntent: async (amount, currency, paymentMethodId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { data } = await fetchWithAuth(
+        `${API_URL}/transactions/stripe/create-payment-intent`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            amount: Math.round(parseFloat(amount) * 100), // convert to cents
+            currency,
+            payment_method_id: paymentMethodId,
+          }),
         }
-      },
+      );
 
-      // Helper to check if any operation was successful
-      hasSuccess: () =>
-        Object.values(get().successStates).some((value) => value === true),
-      fetchBalance: async () => {
-        set({ isLoading: true, error: null });
+      set({ isLoading: false });
+      return data;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error.message,
+      });
+      toast.error(error.message || "Failed to create payment intent");
+      throw error;
+    }
+  },
+
+  // Update depositFunds to refresh wallet after deposit
+  depositFunds: async (depositData) => {
+    set({ isLoading: true, error: null });
+    try {
+      let data;
+
+      if (depositData.paymentMethod === "stripe") {
         try {
-          const { data } = await fetchWithCookies(
-            `${API_URL}/transactions/balance`
-          );
-
-          if (!data) {
-            throw new Error("Failed to fetch balance");
-          }
-
-          set({
-            wallet: data.wallet,
-            isLoading: false,
-          });
-
-          return data.wallet;
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error.message,
-          });
-          return null;
-        }
-      },
-      fetchTransactions: async (
-        period = null,
-        page = 1,
-        currency = null,
-        type = null
-      ) => {
-        let limit = 10;
-
-        set({ isLoading: true, error: null });
-        try {
-          let url = period
-            ? `${API_URL}/transactions/filtered-history?period=${period}`
-            : `${API_URL}/transactions/history`;
-
-          url += url.includes("?") ? "&" : "?";
-          url += `page=${page}&limit=${limit}`;
-
-          if (currency) {
-            url += `&currency=${currency}`;
-          }
-
-          if (type) {
-            url += `&type=${type}`;
-          }
-          const { data } = await fetchWithCookies(url);
-
-          if (!data) {
-            throw new Error("Failed to fetch transactions");
-          }
-
-          const recipients = data.transactions
-            .filter((t) => t.type === "send" && t.recipient)
-            .map((t) => t.recipient)
-            .filter(
-              (recipient, index, self) =>
-                index === self.findIndex((r) => r._id === recipient._id)
-            )
-            .slice(0, 5);
-
-          set({
-            transactions: data.transactions,
-            recentRecipients: recipients,
-            stats: data.stats || null,
-            pagination: data.pagination || {
-              total: data.transactions.length,
-              page: page,
-              pages: Math.ceil(data.transactions.length / limit),
-              limit: limit,
-            },
-            isLoading: false,
-          });
-
-          return data;
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error.message,
-          });
-          return null;
-        }
-      },
-      transferFunds: async (transferData) => {
-        set({ isLoading: true, error: null });
-        try {
-          // All transfers should now go through Stripe processing
-          let data;
-
-          // If there's a payment method ID, user is paying with a credit card via Stripe
-          if (transferData.paymentMethodId) {
-            // Direct card payment via Stripe
-            data = await createStripeUserTransfer(transferData);
-          } else {
-            // Standard wallet transfer - still processed via Stripe on backend
-            const { data: responseData } = await fetchWithCookies(
-              `${API_URL}/transactions/send`,
-              {
-                method: "POST",
-                body: JSON.stringify(transferData),
-              }
+          if (depositData.stripePaymentIntentId) {
+            data = await confirmPaymentSuccess(
+              depositData.stripePaymentIntentId,
+              depositData.amount,
+              depositData.currency
             );
-
-            data = responseData;
-          } // Only update balance after transfer, don't fetch transactions
-          get().fetchBalance();
-
-          set((state) => ({
-            isLoading: false,
-            success: true,
-            successStates: {
-              ...state.successStates,
-              transfer: true,
-            },
-          }));
-          toast.success("Money sent successfully via Stripe");
-          return data;
-        } catch (error) {
-          set((state) => ({
-            isLoading: false,
-            error: error.message,
-            success: false,
-            successStates: {
-              ...state.successStates,
-              transfer: false,
-            },
-          }));
-          toast.error(error.message || "Failed to send money");
-          throw error;
+          } else {
+            throw new Error("Missing Stripe payment information");
+          }
+        } catch (stripeError) {
+          console.log("error");
         }
-      },
-      createPaymentIntent: async (amount, currency, paymentMethodId) => {
-        set({ isLoading: true, error: null });
+      } else {
         try {
-          const { data } = await fetchWithCookies(
-            `${API_URL}/transactions/stripe/create-payment-intent`,
+          const { data: responseData } = await fetchWithAuth(
+            `${API_URL}/transactions/deposit`,
             {
               method: "POST",
-              body: JSON.stringify({
-                amount: Math.round(parseFloat(amount) * 100), // convert to cents
-                currency,
-                payment_method_id: paymentMethodId,
-              }),
+              body: JSON.stringify(depositData),
             }
           );
-
-          set({ isLoading: false });
-          return data;
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error.message,
-          });
-          toast.error(error.message || "Failed to create payment intent");
-          throw error;
-        }
-      },
-      depositFunds: async (depositData) => {
-        set({ isLoading: true, error: null });
-        try {
-          // Check if this is a Stripe payment
-          let data;
-
-          if (depositData.paymentMethod === "stripe") {
-            try {
-              // If stripePaymentIntentId is provided, it means payment was already processed
-              // through the Stripe Elements and we just need to confirm with our backend
-              if (depositData.stripePaymentIntentId) {
-                data = await confirmPaymentSuccess(
-                  depositData.stripePaymentIntentId,
-                  depositData.amount,
-                  depositData.currency
-                );
-              } else {
-                throw new Error("Missing Stripe payment information");
-              }
-            } catch (stripeError) {
-              console.log("error");
-            }
-          } else {
-            // Use standard API for deposit
-            try {
-              const { data: responseData } = await fetchWithCookies(
-                `${API_URL}/transactions/deposit`,
-                {
-                  method: "POST",
-                  body: JSON.stringify(depositData),
-                }
-              );
-              data = responseData;
-            } catch (regularError) {
-              console.log(
-                "⚠️ Regular deposit error detected, falling back to simulation:",
-                regularError.message
-              ); // Fall back to simulated deposit
-              const { data: responseData } = await fetchWithCookies(
-                `${API_URL}/transactions/simulate-deposit`,
-                {
-                  method: "POST",
-                  body: JSON.stringify({
-                    amount: depositData.amount,
-                    currency: depositData.currency,
-                    cardDetails: depositData.cardDetails || {
-                      cardholderName:
-                        depositData.userInfo?.accountHolderName || "Test User",
-                      cardNumber: "************4242",
-                    },
-                  }),
-                }
-              );
-              data = responseData;
-            }
-          } // Only update balance after deposit, don't fetch transactions
-          get().fetchBalance();
-
-          set((state) => ({
-            isLoading: false,
-            success: true,
-            successStates: {
-              ...state.successStates,
-              deposit: true,
-            },
-          }));
-          toast.success("Funds deposited successfully");
-          return data;
-        } catch (error) {
-          set((state) => ({
-            isLoading: false,
-            error: error.message,
-            success: false,
-            successStates: {
-              ...state.successStates,
-              deposit: false,
-            },
-          }));
-          toast.error(error.message || "Failed to deposit funds");
-          throw error;
-        }
-      },
-
-      requestMoney: async (requestData) => {
-        set({ isLoading: true, error: null });
-        try {
-          // Check if we're using Stripe for payment requests
-          let response;
-          let data;
-
-          if (requestData.useStripe) {
-            // Use Stripe for payment request
-            data = await createStripePaymentRequest({
-              targetUserId: requestData.targetUserId,
-              targetEmail: requestData.targetEmail,
-              amount: requestData.amount,
-              currency: requestData.currency,
-              notes: requestData.notes,
-            });
-          } else {
-            // Use standard API for request
-            const { data: responseData } = await fetchWithCookies(
-              `${API_URL}/transactions/request`,
-              {
-                method: "POST",
-                body: JSON.stringify(requestData),
-              }
-            );
-            data = responseData;
-          }
-          get().fetchMoneyRequests();
-
-          set((state) => ({
-            isLoading: false,
-            success: true,
-            successStates: {
-              ...state.successStates,
-              request: true,
-            },
-          }));
-          toast.success("Money request sent successfully");
-          return data;
-        } catch (error) {
-          set((state) => ({
-            isLoading: false,
-            error: error.message,
-            success: false,
-            successStates: {
-              ...state.successStates,
-              request: false,
-            },
-          }));
-          toast.error(error.message || "Failed to send money request");
-          throw error;
-        }
-      },
-
-      payMoneyRequest: async (requestId, useStripe = false) => {
-        set({ isLoading: true, error: null });
-        try {
-          let url = useStripe
-            ? `${API_URL}/transactions/stripe/payment-request`
-            : `${API_URL}/transactions/pay-request`;
-          const { data } = await fetchWithCookies(url, {
-            method: "POST",
-            body: JSON.stringify({ requestId }),
-          }); // Update only what's needed after payment
-          get().fetchBalance();
-          get().fetchMoneyRequests();
-
-          set((state) => ({
-            isLoading: false,
-            success: true,
-            successStates: {
-              ...state.successStates,
-              payRequest: true,
-            },
-          }));
-          toast.success("Request paid successfully");
-          return data;
-        } catch (error) {
-          set((state) => ({
-            isLoading: false,
-            error: error.message,
-            success: false,
-            successStates: {
-              ...state.successStates,
-              payRequest: false,
-            },
-          }));
-          toast.error(error.message || "Failed to pay request");
-          throw error;
-        }
-      },
-      fetchMoneyRequests: async (type = null) => {
-        set({ isLoading: true, error: null });
-        try {
-          const url = type
-            ? `${API_URL}/transactions/requests?type=${type}`
-            : `${API_URL}/transactions/requests`;
-
-          const { data } = await fetchWithCookies(url);
-
-          set({
-            requests: data.requests,
-            isLoading: false,
-          });
-
-          return data.requests;
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error.message,
-          });
-          return null;
-        }
-      },
-      fetchUserProfile: async () => {
-        set({ isLoading: true });
-        try {
-          const { data } = await fetchWithCookies(`${API_URL}/auth/profile`);
-
-          set({
-            userProfile: data.user,
-            isLoading: false,
-          });
-
-          return data.user;
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error.message,
-          });
-          return null;
-        }
-      },
-
-      fetchVerificationStatus: async () => {
-        set({
-          verificationStatus: { ...get().verificationStatus, loading: true },
-        });
-        try {
-          const userData = await get().fetchUserProfile();
-
-          if (userData && userData.verified === true) {
-            set({
-              verificationStatus: {
-                isVerified: true,
-                pendingRequests: [],
-                loading: false,
-              },
-            });
-            return;
-          } // Fetch both passport and gun license verification requests
-          const [passportRes, gunRes] = await Promise.all([
-            fetch(`${API_URL}/verification/passport/me`, {
-              credentials: "include",
-            }).catch(() => ({ ok: false })),
-
-            fetch(`${API_URL}/verification/gun/me`, {
-              credentials: "include",
-            }).catch(() => ({ ok: false })),
-          ]);
-
-          const pendingRequests = [];
-
-          if (passportRes.ok) {
-            const passportData = await passportRes.json();
-            if (passportData && passportData.verifications) {
-              pendingRequests.push(
-                ...passportData.verifications.map((v) => ({
-                  ...v,
-                  type: "passport",
-                }))
-              );
-            }
-          }
-
-          if (gunRes.ok) {
-            const gunData = await gunRes.json();
-            if (gunData && gunData.verifications) {
-              pendingRequests.push(
-                ...gunData.verifications.map((v) => ({ ...v, type: "gun" }))
-              );
-            }
-          }
-
-          set({
-            verificationStatus: {
-              isVerified: false,
-              pendingRequests,
-              loading: false,
-            },
-          });
-        } catch (error) {
-          console.error("Error fetching verification status:", error);
-          set({
-            verificationStatus: {
-              ...get().verificationStatus,
-              loading: false,
-            },
-          });
-        }
-      },
-      fetchUsers: async () => {
-        set({ isLoading: true, error: null });
-        try {
-          const { data } = await fetchWithCookies(
-            `${API_URL}/transactions/users/transfer`
+          data = responseData;
+        } catch (regularError) {
+          console.log(
+            "⚠️ Regular deposit error detected, falling back to simulation:",
+            regularError.message
           );
-
-          set({
-            users: data.users,
-            isUsersFetched: true,
-            isLoading: false,
-          });
-
-          return data.users;
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error.message,
-          });
-          return null;
         }
-      },
-      searchUsers: async (searchTerm) => {
-        try {
-          const { data } = await fetchWithCookies(
-            `${API_URL}/transactions/users/transfer?search=${encodeURIComponent(
-              searchTerm
-            )}`
-          );
+      }
 
-          set({
-            users: data.users,
-            isUsersFetched: true,
-          });
+      // Update wallet after successful deposit
+      await get().updateWalletAfterTransaction();
 
-          return data.users;
-        } catch (error) {
-          console.error("Error searching users:", error);
-          return [];
-        }
-      },
-
-      clearError: () => set({ error: null }),
-
-      getCurrencySymbol: (currency) => {
-        return CURRENCIES.find((c) => c.value === currency)?.symbol || "";
-      },
-
-      getBalanceDisplay: (currency) => {
-        const state = get();
-        const balance = state.wallet.balances?.find(
-          (b) => b.currency === currency
-        );
-        const currencyObj = CURRENCIES.find((c) => c.value === currency);
-        if (balance && currencyObj) {
-          return `${currencyObj.symbol}${balance.amount.toFixed(2)}`;
-        }
-        return `${currency} 0.00`;
-      },
-
-      getTotalBalanceInUSD: () => {
-        const state = get();
-        if (!state.wallet.balances || state.wallet.balances.length === 0)
-          return 0;
-
-        return state.wallet.balances.reduce((total, balance) => {
-          const amountInUSD =
-            balance.currency === "USD"
-              ? balance.amount
-              : get().convertCurrency(balance.amount, balance.currency, "USD");
-          return total + amountInUSD;
-        }, 0);
-      },
-
-      convertCurrency: (amount, fromCurrency, toCurrency) => {
-        if (fromCurrency === toCurrency) return amount;
-        const rate = exchangeRates[fromCurrency]?.[toCurrency] || 0;
-        return amount * rate;
-      },
-
-      formatDate: (dateString) => {
-        if (!dateString) return "Unknown date";
-        const options = {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        };
-        return new Date(dateString).toLocaleDateString(undefined, options);
-      },
-
-      getReceiveQRData: () => {
-        const state = get();
-        if (!state.userProfile || !state.userProfile.email) return null;
-
-        return JSON.stringify({
-          email: state.userProfile.email,
-          name: state.userProfile.fullname || state.userProfile.email,
-          walletId: state.wallet.walletId || "",
-        });
-      },
-
-      initializeWallet: async () => {
-        await get().fetchUserProfile();
-        await get().fetchBalance();
-        await get().fetchMoneyRequests();
-        await get().fetchVerificationStatus();
-      },
-    }),
-    {
-      name: "wallet-storage",
-      partialize: (state) => ({
-        wallet: state.wallet,
-        transactions: state.transactions,
-        requests: state.requests,
-        recentRecipients: state.recentRecipients,
-      }),
+      set((state) => ({
+        isLoading: false,
+        success: true,
+        successStates: {
+          ...state.successStates,
+          deposit: true,
+        },
+      }));
+      toast.success("Funds deposited successfully");
+      return data;
+    } catch (error) {
+      set((state) => ({
+        isLoading: false,
+        error: error.message,
+        success: false,
+        successStates: {
+          ...state.successStates,
+          deposit: false,
+        },
+      }));
+      toast.error(error.message || "Failed to deposit funds");
+      throw error;
     }
-  )
-);
+  },
+
+  requestMoney: async (requestData) => {
+    set({ isLoading: true, error: null });
+    try {
+      // Check if we're using Stripe for payment requests
+      let response;
+      let data;
+
+      if (requestData.useStripe) {
+        // Use Stripe for payment request
+        data = await createStripePaymentRequest({
+          targetUserId: requestData.targetUserId,
+          targetEmail: requestData.targetEmail,
+          amount: requestData.amount,
+          currency: requestData.currency,
+          notes: requestData.notes,
+        });
+      } else {
+        // Use standard API for request
+        const { data: responseData } = await fetchWithAuth(
+          `${API_URL}/transactions/request`,
+          {
+            method: "POST",
+            body: JSON.stringify(requestData),
+          }
+        );
+        data = responseData;
+      }
+      get().fetchMoneyRequests();
+
+      set((state) => ({
+        isLoading: false,
+        success: true,
+        successStates: {
+          ...state.successStates,
+          request: true,
+        },
+      }));
+      toast.success("Money request sent successfully");
+      return data;
+    } catch (error) {
+      set((state) => ({
+        isLoading: false,
+        error: error.message,
+        success: false,
+        successStates: {
+          ...state.successStates,
+          request: false,
+        },
+      }));
+      toast.error(error.message || "Failed to send money request");
+      throw error;
+    }
+  },
+
+  // Update payMoneyRequest to refresh wallet after payment
+  payMoneyRequest: async (requestId, useStripe = false) => {
+    set({ isLoading: true, error: null });
+    try {
+      let url = useStripe
+        ? `${API_URL}/transactions/stripe/payment-request`
+        : `${API_URL}/transactions/pay-request`;
+      const { data } = await fetchWithAuth(url, {
+        method: "POST",
+        body: JSON.stringify({ requestId }),
+      });
+
+      // Update wallet after successful payment
+      await get().updateWalletAfterTransaction();
+      await get().fetchMoneyRequests();
+
+      set((state) => ({
+        isLoading: false,
+        success: true,
+        successStates: {
+          ...state.successStates,
+          payRequest: true,
+        },
+      }));
+      toast.success("Request paid successfully");
+      return data;
+    } catch (error) {
+      set((state) => ({
+        isLoading: false,
+        error: error.message,
+        success: false,
+        successStates: {
+          ...state.successStates,
+          payRequest: false,
+        },
+      }));
+      toast.error(error.message || "Failed to pay request");
+      throw error;
+    }
+  },
+
+  fetchMoneyRequests: async (type = null) => {
+    set({ isLoading: true, error: null });
+    try {
+      const url = type
+        ? `${API_URL}/transactions/requests?type=${type}`
+        : `${API_URL}/transactions/requests`;
+
+      const { data } = await fetchWithAuth(url);
+
+      set({
+        requests: data.requests,
+        isLoading: false,
+      });
+
+      return data.requests;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error.message,
+      });
+      return null;
+    }
+  },
+
+  fetchUserProfile: async () => {
+    set({ isLoading: true });
+    try {
+      const { data } = await fetchWithAuth(`${API_URL}/auth/profile`);
+
+      set({
+        userProfile: data.user,
+        isLoading: false,
+      });
+
+      return data.user;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error.message,
+      });
+      return null;
+    }
+  },
+
+  fetchVerificationStatus: async () => {
+    set({
+      verificationStatus: { ...get().verificationStatus, loading: true },
+    });
+    try {
+      const userData = await get().fetchUserProfile();
+
+      if (userData && userData.verified === true) {
+        set({
+          verificationStatus: {
+            isVerified: true,
+            pendingRequests: [],
+            loading: false,
+          },
+        });
+        return;
+      } // Fetch both passport and gun license verification requests
+      const [passportRes, gunRes] = await Promise.all([
+        fetchWithAuth(`${API_URL}/verification/passport/me`, {
+          credentials: "include",
+        }).catch(() => ({ ok: false })),
+
+        fetchWithAuth(`${API_URL}/verification/gun/me`, {
+          credentials: "include",
+        }).catch(() => ({ ok: false })),
+      ]);
+
+      const pendingRequests = [];
+
+      if (passportRes.ok) {
+        const passportData = await passportRes.json();
+        if (passportData && passportData.verifications) {
+          pendingRequests.push(
+            ...passportData.verifications.map((v) => ({
+              ...v,
+              type: "passport",
+            }))
+          );
+        }
+      }
+
+      if (gunRes.ok) {
+        const gunData = await gunRes.json();
+        if (gunData && gunData.verifications) {
+          pendingRequests.push(
+            ...gunData.verifications.map((v) => ({ ...v, type: "gun" }))
+          );
+        }
+      }
+
+      set({
+        verificationStatus: {
+          isVerified: false,
+          pendingRequests,
+          loading: false,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching verification status:", error);
+      set({
+        verificationStatus: {
+          ...get().verificationStatus,
+          loading: false,
+        },
+      });
+    }
+  },
+
+  fetchUsers: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const { data } = await fetchWithAuth(
+        `${API_URL}/transactions/users/transfer`
+      );
+
+      set({
+        users: data.users,
+        isUsersFetched: true,
+        isLoading: false,
+      });
+
+      return data.users;
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error.message,
+      });
+      return null;
+    }
+  },
+
+  searchUsers: async (searchTerm) => {
+    try {
+      const { data } = await fetchWithAuth(
+        `${API_URL}/transactions/users/transfer?search=${encodeURIComponent(
+          searchTerm
+        )}`
+      );
+
+      set({
+        users: data.users,
+        isUsersFetched: true,
+      });
+
+      return data.users;
+    } catch (error) {
+      console.error("Error searching users:", error);
+      return [];
+    }
+  },
+
+  clearError: () => set({ error: null }),
+
+  getCurrencySymbol: (currency) => {
+    return CURRENCIES.find((c) => c.value === currency)?.symbol || "";
+  },
+
+  getBalanceDisplay: (currency) => {
+    const state = get();
+    const balance = state.wallet.balances?.find(
+      (b) => b.currency === currency
+    );
+    const currencyObj = CURRENCIES.find((c) => c.value === currency);
+    if (balance && currencyObj) {
+      return `${currencyObj.symbol}${balance.amount.toFixed(2)}`;
+    }
+    return `${currency} 0.00`;
+  },
+
+  getTotalBalanceInUSD: () => {
+    const state = get();
+    if (!state.wallet.balances || state.wallet.balances.length === 0)
+      return 0;
+
+    return state.wallet.balances.reduce((total, balance) => {
+      const amountInUSD =
+        balance.currency === "USD"
+          ? balance.amount
+          : get().convertCurrency(balance.amount, balance.currency, "USD");
+      return total + amountInUSD;
+    }, 0);
+  },
+
+  convertCurrency: (amount, fromCurrency, toCurrency) => {
+    if (fromCurrency === toCurrency) return amount;
+    const rate = exchangeRates[fromCurrency]?.[toCurrency] || 0;
+    return amount * rate;
+  },
+
+  formatDate: (dateString) => {
+    if (!dateString) return "Unknown date";
+    const options = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  },
+
+  getReceiveQRData: () => {
+    const state = get();
+    if (!state.userProfile || !state.userProfile.email) return null;
+
+    return JSON.stringify({
+      email: state.userProfile.email,
+      name: state.userProfile.fullname || state.userProfile.email,
+      walletId: state.wallet.walletId || "",
+    });
+  },
+
+  initializeWallet: async () => {
+    await get().fetchUserProfile();
+    await get().fetchWallet();
+    await get().fetchMoneyRequests();
+    await get().fetchVerificationStatus();
+  },
+
+  resetWalletState: () => {
+    set({ 
+      isWalletLoaded: false,
+      wallet: { balances: [], walletId: "" }
+    });
+  },
+
+  // Exchange currency
+  exchangeCurrency: async (fromCurrency, toCurrency, amount) => {
+    try {
+      set({ isLoading: true, error: null });
+      
+      const { data } = await fetchWithAuth(
+        `${API_BASE_URL}/api/transactions/exchange`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            fromCurrency,
+            toCurrency,
+            amount: parseFloat(amount),
+          }),
+        }
+      );
+
+      if (!data) {
+        throw new Error("Failed to exchange currencies");
+      }
+
+      // Update wallet balance
+      await get().updateWalletAfterTransaction();
+      set({ successStates: { ...get().successStates, exchange: true } });
+
+      return data;
+    } catch (error) {
+      set({ error: error.message });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // Get exchange history
+  fetchExchangeHistory: async () => {
+    try {
+      set({ isLoading: true, error: null });
+      
+      const { data } = await fetchWithAuth(
+        `${API_BASE_URL}/api/transactions/exchange-history`
+      );
+
+      if (!data) {
+        throw new Error("Failed to fetch exchange history");
+      }
+
+      return data;
+    } catch (error) {
+      set({ error: error.message });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+}));
 
 export default useWalletStore;

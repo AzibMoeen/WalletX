@@ -11,6 +11,7 @@ import {
   payRequest,
   getMoneyRequests,
   getFilteredTransactionHistory,
+  getExchangeHistory,
 } from "../controllers/transaction.controllers.js";
 
 import {
@@ -49,6 +50,9 @@ router.post("/send", sendMoney);
 
 // Currency exchange - all parameters should be in request body
 router.post("/exchange", exchangeCurrency);
+
+// Get exchange history
+router.get("/exchange-history", getExchangeHistory);
 
 // Money requests - POST routes - all parameters should be in request body
 router.post("/request", requestMoney);

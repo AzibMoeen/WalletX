@@ -13,7 +13,9 @@ import {
   Wallet,
   X,
 } from "lucide-react";
+import { ThemeToggle } from "./theme-toggle";
 import useAuthStore from "@/lib/store/useAuthStore";
+import useWalletStore from "@/lib/store/useWalletStore";
 
 import {
   Sidebar,
@@ -40,6 +42,7 @@ function WalletSidebarInner({ children }) {
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
   const { user, logout } = useAuthStore();
+  const { resetWalletState } = useWalletStore();
 
   const closeMobileSidebar = () => {
     if (isMobile) {
@@ -49,8 +52,9 @@ function WalletSidebarInner({ children }) {
 
   const handleLogout = async () => {
     try {
-      logout();
-
+      resetWalletState();
+      await logout();
+      router.push("/login");
     } catch (error) {
       console.error("Error during logout:", error);
       router.push("/login");
@@ -234,6 +238,7 @@ function WalletSidebarInner({ children }) {
               <LogOut className="h-4 w-4 text-muted-foreground" />
               <span className="sr-only">Logout</span>
             </Button>
+            <ThemeToggle />
           </div>
         </SidebarFooter>
       </Sidebar>
@@ -245,6 +250,7 @@ function WalletSidebarInner({ children }) {
               {currentPageTitle}
             </h1>
           </div>
+
           <div className="ml-auto flex items-center gap-2">
             {!user?.verified && (
               <Badge variant="gradient-subtle" className="text-primary">

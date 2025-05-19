@@ -703,3 +703,40 @@ export const getFilteredTransactionHistory = async (req, res) => {
   }
 };
 
+// Get exchange history
+export const getExchangeHistory = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const exchanges = await Transaction.find({
+      user: userId,
+      type: "exchange",
+    })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .select("amount currencyFrom currencyTo exchangeRate createdAt");
+
+    // Format the response
+    const formattedExchanges = exchanges.map((exchange) => ({
+      fromCurrency: exchange.currencyFrom,
+      toCurrency: exchange.currencyTo,
+      fromAmount: exchange.amount,
+      toAmount: exchange.amount * exchange.exchangeRate,
+      date: exchange.createdAt.toLocaleDateString(),
+      exchangeRate: exchange.exchangeRate,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: formattedExchanges,
+    });
+  } catch (error) {
+    console.error("Error fetching exchange history:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch exchange history",
+    });
+  }
+};
+

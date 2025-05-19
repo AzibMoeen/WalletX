@@ -127,7 +127,7 @@ const CardDepositForm = ({
                 <span className="text-gray-500">
                   {getCurrencySymbol(currency)}
                 </span>
-              </div>
+              </div>{" "}
               <Input
                 id="amount"
                 className={`pl-8 h-10 ${errors.amount ? "border-red-500" : ""}`}
@@ -141,10 +141,12 @@ const CardDepositForm = ({
                     value: 0.01,
                     message: "Amount must be greater than 0",
                   },
+                  setValueAs: (value) =>
+                    parseFloat(parseFloat(value).toFixed(2)),
                 })}
-                type="number"
+                type="text"
+                inputMode="decimal"
                 placeholder="0.00"
-                step="0.01"
               />
             </div>
 

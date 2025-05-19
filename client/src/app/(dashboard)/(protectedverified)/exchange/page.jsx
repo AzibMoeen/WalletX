@@ -10,6 +10,7 @@ import ExchangeRatesCard from "./components/ExchangeRatesCard";
 import ExchangeHistoryCard from "./components/ExchangeHistoryCard";
 import useWalletStore from "@/lib/store/useWalletStore";
 
+
 // Demo exchange rates
 const EXCHANGE_RATES = {
   USD: { EUR: 0.91, PKR: 278.5 },
@@ -24,10 +25,12 @@ export default function ExchangePage() {
     isLoading: storeLoading,
     error: storeError,
     success: storeSuccess,
-    fetchBalance,
+    fetchWallet,
     getBalanceDisplay,
     getCurrencySymbol,
     setSuccess: setStoreSuccess,
+    exchangeCurrency,
+    fetchExchangeHistory,
   } = useWalletStore();
 
   const [fromCurrency, setFromCurrency] = useState("USD");
@@ -43,13 +46,15 @@ export default function ExchangePage() {
   const [lastUpdated, setLastUpdated] = useState("");
 
   useEffect(() => {
-    fetchBalance();
-    fetchExchangeHistory();
-    generateExchangeRates();
-
-    // Set the current time as last updated
-    setLastUpdated(new Date().toLocaleTimeString());
-  }, [fetchBalance]);
+    const loadData = async () => {
+      await fetchWallet();
+      const history = await fetchExchangeHistory();
+      setExchangeHistory(history);
+      generateExchangeRates();
+      setLastUpdated(new Date().toLocaleTimeString());
+    };
+    loadData();
+  }, [fetchWallet, fetchExchangeHistory]);
 
   useEffect(() => {
     // Update conversion rate when currencies change
@@ -63,34 +68,6 @@ export default function ExchangePage() {
       }
     }
   }, [fromCurrency, toCurrency, fromAmount]);
-
-  const fetchExchangeHistory = () => {
-    // This would be replaced with a real API call
-    // Simulating exchange history for demo purposes
-    setExchangeHistory([
-      {
-        fromCurrency: "USD",
-        toCurrency: "EUR",
-        fromAmount: 100,
-        toAmount: 91,
-        date: "Apr 23, 2025",
-      },
-      {
-        fromCurrency: "EUR",
-        toCurrency: "PKR",
-        fromAmount: 50,
-        toAmount: 15315,
-        date: "Apr 20, 2025",
-      },
-      {
-        fromCurrency: "PKR",
-        toCurrency: "USD",
-        fromAmount: 5000,
-        toAmount: 18,
-        date: "Apr 15, 2025",
-      },
-    ]);
-  };
 
   const generateExchangeRates = () => {
     const rates = [];
@@ -127,7 +104,6 @@ export default function ExchangePage() {
   const handleSwapCurrencies = () => {
     setFromCurrency(toCurrency);
     setToCurrency(fromCurrency);
-    // The useEffect will handle updating the conversion rate and amounts
   };
 
   const handleSubmit = async (e) => {
@@ -150,52 +126,17 @@ export default function ExchangePage() {
         throw new Error(`Insufficient ${fromCurrency} balance`);
       }
 
-      const response = await fetch(
-        "https://walletx-production.up.railway.app/api/transactions/exchange",
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            fromCurrency,
-            toCurrency,
-            amount: parseFloat(fromAmount),
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to exchange currencies");
-      }
-
-      // Update wallet balance
-      await fetchBalance();
+      await exchangeCurrency(fromCurrency, toCurrency, fromAmount);
+      
       setLocalSuccess(true);
-      setStoreSuccess("exchange", true); // Set operation-specific success state
-
-      // Add the exchange to history
-      setExchangeHistory((prev) => [
-        {
-          fromCurrency,
-          toCurrency,
-          fromAmount: parseFloat(fromAmount),
-          toAmount: parseFloat(toAmount),
-          date: new Date().toLocaleDateString(),
-        },
-        ...prev,
-      ]);
+      setStoreSuccess("exchange", true);
 
       // Reset form
       setFromAmount("");
       setToAmount("");
 
       // Redirect to wallet page after 2 seconds
-      setTimeout(() => {
-        router.push("/wallet");
-      }, 2000);
+  
     } catch (error) {
       setLocalError(error.message);
     } finally {
