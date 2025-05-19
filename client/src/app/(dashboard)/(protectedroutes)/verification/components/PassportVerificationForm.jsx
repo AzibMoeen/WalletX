@@ -38,10 +38,9 @@ const PassportVerificationForm = ({
       fullName: "",
       dob: "",
     },
-    mode: "onChange",
+    mode: "onSubmit",
   });
 
-  // Handle form submission
   const onSubmit = (data) => {
     if (!passportFile) {
       // Show error message for missing file
@@ -284,7 +283,7 @@ const PassportVerificationForm = ({
                 </p>
               )}
             </div>
-          </div>
+          </div>{" "}
           <FileUploader
             label="Passport Photo"
             file={passportFile}
@@ -293,11 +292,6 @@ const PassportVerificationForm = ({
             inputId="passport-upload"
             placeholderText="Drag and drop your passport photo or"
           />
-          {!passportFile && (
-            <p className="text-xs text-red-500 mt-1">
-              Passport photo is required
-            </p>
-          )}
           {passportSubmitMessage && (
             <p
               className={`text-sm ${
@@ -308,15 +302,11 @@ const PassportVerificationForm = ({
             >
               {passportSubmitMessage.text}
             </p>
-          )}
+          )}{" "}
           <Button
             type="submit"
             className="w-full h-10 text-base"
-            disabled={
-              isSubmittingPassport ||
-              !passportFile ||
-              Object.keys(errors).length > 0
-            }
+            disabled={isSubmittingPassport || Object.keys(errors).length > 0}
           >
             {isSubmittingPassport
               ? "Submitting..."

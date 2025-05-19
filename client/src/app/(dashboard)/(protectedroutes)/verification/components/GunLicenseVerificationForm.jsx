@@ -33,7 +33,7 @@ const GunLicenseVerificationForm = ({
       issueDate: "",
       expiryDate: "",
     },
-    mode: "onChange",
+    mode: "onSubmit",
   });
 
   // Get today's date for validation
@@ -203,7 +203,6 @@ const GunLicenseVerificationForm = ({
               )}
             </div>
           </div>
-
           <div className="w-full grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="issueDate" className="text-sm font-medium">
@@ -268,8 +267,7 @@ const GunLicenseVerificationForm = ({
                 </p>
               )}
             </div>
-          </div>
-
+          </div>{" "}
           <FileUploader
             label="Gun License Photo"
             file={gunLicenseFile}
@@ -278,13 +276,6 @@ const GunLicenseVerificationForm = ({
             inputId="license-upload"
             placeholderText="Drag and drop your license photo or"
           />
-
-          {!gunLicenseFile && (
-            <p className="text-xs text-red-500 mt-1">
-              License photo is required
-            </p>
-          )}
-
           {gunSubmitMessage && (
             <p
               className={`text-sm ${
@@ -295,15 +286,11 @@ const GunLicenseVerificationForm = ({
             >
               {gunSubmitMessage.text}
             </p>
-          )}
+          )}{" "}
           <Button
             type="submit"
             className="cursor-pointer w-full h-10 text-base"
-            disabled={
-              isSubmittingGun ||
-              !gunLicenseFile ||
-              Object.keys(errors).length > 0
-            }
+            disabled={isSubmittingGun || Object.keys(errors).length > 0}
           >
             {isSubmittingGun
               ? "Submitting..."

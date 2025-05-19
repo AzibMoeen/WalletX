@@ -55,9 +55,7 @@ const useVerificationStore = create((set, get) => ({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || "Failed to fetch gun verifications"
-        );
+        throw new Error(data.message || "Failed to fetch gun verifications");
       }
 
       set({
@@ -112,7 +110,6 @@ const useVerificationStore = create((set, get) => ({
       throw error;
     }
   },
-
   // Submit gun license verification
   submitGunVerification: async (formData) => {
     set({ isLoading: true, error: null });
@@ -120,10 +117,7 @@ const useVerificationStore = create((set, get) => ({
       const response = await fetch(`${API_URL}/verification/gun`, {
         method: "POST",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: formData,
+        body: formData, // Send as FormData without content-type header
       });
 
       // Check content type before parsing as JSON
