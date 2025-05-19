@@ -44,12 +44,15 @@ const RegistrationForm = ({ onSubmit, isLoading, error }) => {
           id="fullName"
           type="text"
           placeholder="Enter your full name"
-          className={errors.fullName ? "border-red-500" : ""}
-          {...register("fullName", {
+          className={errors.fullName ? "border-red-500" : ""}          {...register("fullName", {
             required: "Full name is required",
             minLength: {
               value: 3,
               message: "Name must be at least 3 characters",
+            },
+            maxLength: {
+              value: 14,
+              message: "Name cannot exceed 14 characters",
             },
           })}
         />

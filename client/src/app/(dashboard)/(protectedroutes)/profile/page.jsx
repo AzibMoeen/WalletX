@@ -132,14 +132,17 @@ const ProfilePage = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="fullname">Full Name</Label>
-                    <Input
+                    <Label htmlFor="fullname">Full Name</Label>                    <Input
                       id="fullname"
                       {...registerGeneral("fullname", {
                         required: "Name is required",
                         minLength: {
                           value: 3,
                           message: "Name must be at least 3 characters",
+                        },
+                        maxLength: {
+                          value: 14,
+                          message: "Name cannot exceed 14 characters",
                         },
                       })}
                       placeholder="Your full name"
