@@ -37,6 +37,8 @@ router.get("/users/transfer", getAllUsersForTransfer);
 // Transaction history routes
 router.get("/history", getTransactionHistory);
 router.get("/filtered-history", getFilteredTransactionHistory);
+// Generic transactions endpoint to fix the 404 error
+router.get("/", getTransactionHistory);
 
 // Money requests
 router.get("/requests", getMoneyRequests);

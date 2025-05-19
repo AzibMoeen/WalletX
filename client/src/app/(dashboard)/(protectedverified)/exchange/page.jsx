@@ -47,9 +47,8 @@ export default function ExchangePage() {
 
   useEffect(() => {
     const loadData = async () => {
-      await fetchWallet();
-      const history = await fetchExchangeHistory();
-      setExchangeHistory(history);
+      await fetchWallet();      const response = await fetchExchangeHistory();
+      setExchangeHistory(response.data || []);
       generateExchangeRates();
       setLastUpdated(new Date().toLocaleTimeString());
     };
@@ -127,7 +126,7 @@ export default function ExchangePage() {
       }
 
       await exchangeCurrency(fromCurrency, toCurrency, fromAmount);
-      
+
       setLocalSuccess(true);
       setStoreSuccess("exchange", true);
 
@@ -136,7 +135,7 @@ export default function ExchangePage() {
       setToAmount("");
 
       // Redirect to wallet page after 2 seconds
-  
+
     } catch (error) {
       setLocalError(error.message);
     } finally {
