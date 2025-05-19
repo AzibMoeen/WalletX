@@ -298,6 +298,18 @@ export const getTransactionDetails = async (req, res) => {
     const { transactionId } = req.params;
     const userId = req.user._id;
 
+    if (!transactionId) {
+      return res.status(400).json({ message: "Transaction ID is required" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(transactionId)) {
+      return res.status(400).json({ message: "Invalid transaction ID format" });
+    }
+
+    console.log(
+      `Fetching transaction details for ID: ${transactionId}, User: ${userId}`
+    );
+
     const transaction = await Transaction.findOne({
       _id: transactionId,
       user: userId,
@@ -306,17 +318,20 @@ export const getTransactionDetails = async (req, res) => {
       .populate("sender", "fullname email");
 
     if (!transaction) {
+      console.log(`Transaction not found for ID: ${transactionId}`);
       return res.status(404).json({ message: "Transaction not found" });
     }
 
+    console.log(`Successfully fetched transaction: ${transaction._id}`);
     return res.status(200).json({
       transaction,
     });
   } catch (error) {
     console.error("Error fetching transaction details:", error);
-    return res
-      .status(500)
-      .json({ message: "Failed to fetch transaction details" });
+    return res.status(500).json({
+      message: "Failed to fetch transaction details",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 };
 
@@ -714,8 +729,7 @@ export const getExchangeHistory = async (req, res) => {
       type: "exchange",
     })
       .sort({ createdAt: -1 })
-      .limit(limit)
-      .select("amount currencyFrom currencyTo exchangeRate createdAt");
+      .limit(limit);
 
     // Format the response
     const formattedExchanges = exchanges.map((exchange) => ({
@@ -739,4 +753,3 @@ export const getExchangeHistory = async (req, res) => {
     });
   }
 };
-

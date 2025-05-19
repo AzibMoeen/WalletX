@@ -38,32 +38,26 @@ router.get("/users/transfer", getAllUsersForTransfer);
 router.get("/history", getTransactionHistory);
 router.get("/filtered-history", getFilteredTransactionHistory);
 
-// Money requests - must be before dynamic route
+// Money requests
 router.get("/requests", getMoneyRequests);
+
+// Exchange history
+router.get("/exchange-history", getExchangeHistory);
 
 // Individual transaction details - must be after all specific routes
 router.get("/:transactionId", getTransactionDetails);
 
-
-
+// POST routes
 router.post("/send", sendMoney);
-
-// Currency exchange - all parameters should be in request body
 router.post("/exchange", exchangeCurrency);
-
-// Get exchange history
-router.get("/exchange-history", getExchangeHistory);
-
-// Money requests - POST routes - all parameters should be in request body
 router.post("/request", requestMoney);
-router.post("/pay-request", payRequest); // Expects requestId in the request body
+router.post("/pay-request", payRequest);
 
 // Stripe specific endpoints
 router.post("/stripe/create-payment-intent", createPaymentIntent);
 router.post("/stripe/payment-success", handlePaymentSuccess);
-router.post("/stripe/connect-account", createConnectAccount); // New endpoint to create Stripe Connect accounts
-router.post("/stripe/direct-deposit", processDirectDeposit); // Add the new direct deposit endpoint
-
+router.post("/stripe/connect-account", createConnectAccount);
+router.post("/stripe/direct-deposit", processDirectDeposit);
 router.post("/stripe/withdraw", createWithdrawal);
 router.post("/stripe/instant-withdraw", createInstantWithdrawal);
 
