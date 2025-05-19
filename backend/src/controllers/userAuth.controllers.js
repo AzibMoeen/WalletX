@@ -288,16 +288,16 @@ async function Logout(req, res) {
     // Then clear cookies with same options that were used to set them
     res.clearCookie("accessToken", {
       httpOnly: true,
-      secure: true,
+      secure: true, 
       sameSite: "none",
-      path: "/",
+      path: "/", 
     });
 
     res.clearCookie("refreshToken", {
       httpOnly: true,
-      secure: true,
+      secure: true, 
       sameSite: "none",
-      path: "/",
+      path: "/", 
     });
 
     // Additional cookies clearing with minimal options in case there are issues with options matching

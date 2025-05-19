@@ -81,7 +81,7 @@ const ProtectedRoute = ({
 
   const handleVerifyNow = () => {
     setShowVerificationDialog(false);
-    router.replace("/verification");
+    router.push("/verification"); // Redirect to verification page
   };
 
   const handleDismiss = () => {

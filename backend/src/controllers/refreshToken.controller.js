@@ -13,15 +13,14 @@ const refreshAccessToken = async (req, res) => {
         success: false,
         message: "Refresh token not found",
       });
-    }
-
-    // Verify the refresh token
+    }    // Verify the refresh token
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-    // Find user with this refresh token
+    // Find user with this refresh token - only allow refresh if their stored refreshToken matches
+    // This ensures a logged-out user (where refreshToken was set to null) can't refresh
     const user = await User.findOne({
       _id: decoded._id,
-      refreshToken, // Only match if refresh token is the same
+      refreshToken: refreshToken, // Only match if refresh token is exactly the same
     }).select("-password");
 
     if (!user) {

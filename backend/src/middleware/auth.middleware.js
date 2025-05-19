@@ -30,17 +30,23 @@ const verifyJWT = async (req, res, next) => {
         message: "Invalid token format - Token must be a non-empty string",
       });
     }
-
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-    const user = await User.findById(decodedToken?._id).select(
-      "-password -refreshToken"
-    );
+    // Find user but also include refreshToken to check if they're logged out
+    const user = await User.findById(decodedToken?._id).select("-password");
 
     if (!user) {
       return res.status(401).json({
         success: false,
         message: "Invalid Access Token - User not found",
+      });
+    }
+
+    // Check if user has been explicitly logged out (refreshToken set to null)
+    if (!user.refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Session expired - Please login again",
       });
     }
 
