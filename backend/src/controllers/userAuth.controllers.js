@@ -273,22 +273,10 @@ async function Login(req, res) {
 
 async function Logout(req, res) {
   try {
-    // Clear cookies with same options that were used to set them
-    res.clearCookie("accessToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-    });
-
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-    });
-
     const userId = req.user?._id;
     console.log("Logging out user:", userId);
 
+    // First invalidate the refresh token in the database
     if (userId) {
       await User.findByIdAndUpdate(
         userId,
@@ -296,6 +284,25 @@ async function Logout(req, res) {
         { new: true }
       );
     }
+
+    // Then clear cookies with same options that were used to set them
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/",
+    });
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/",
+    });
+
+    // Additional cookies clearing with minimal options in case there are issues with options matching
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
 
     return res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {

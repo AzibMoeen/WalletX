@@ -21,7 +21,7 @@ const refreshAccessToken = async (req, res) => {
     // Find user with this refresh token
     const user = await User.findOne({
       _id: decoded._id,
-      refreshToken,
+      refreshToken, // Only match if refresh token is the same
     }).select("-password");
 
     if (!user) {

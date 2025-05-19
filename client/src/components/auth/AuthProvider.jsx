@@ -12,8 +12,17 @@ export default function AuthProvider({ children }) {
   const { fetchUser, isLoading, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    // Attempt to fetch user data from cookies when component mounts
-    fetchUser();
+    // Check if user has explicitly logged out
+    const hasLoggedOut = localStorage.getItem("loggedOut") === "true";
+
+    if (!hasLoggedOut) {
+      // Attempt to fetch user data from cookies when component mounts
+      fetchUser();
+    } else {
+      console.log("Not restoring session - user has logged out");
+      // Clear the flag once we've respected it
+      localStorage.removeItem("loggedOut");
+    }
   }, [fetchUser]);
 
   // Don't show loading state here as it will flash on every page load

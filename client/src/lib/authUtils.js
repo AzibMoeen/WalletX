@@ -61,13 +61,19 @@ export const fetchWithAuth = async (url, options = {}) => {
  */
 export const refreshAccessToken = async () => {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/auth/refresh-token`,
-      {
-        method: "POST",
-        credentials: "include",
-      }
-    );
+    // Check if user has explicitly logged out, if using browser
+    if (
+      typeof window !== "undefined" &&
+      localStorage.getItem("loggedOut") === "true"
+    ) {
+      console.log("Not refreshing token - user has explicitly logged out");
+      return false;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/auth/refresh-token`, {
+      method: "POST",
+      credentials: "include",
+    });
 
     if (response.ok) {
       return true;
@@ -76,9 +82,11 @@ export const refreshAccessToken = async () => {
     // If refresh token is invalid or expired, clear any stored auth state
     if (response.status === 401) {
       // Clear any stored auth state
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         // Clear any stored auth state in localStorage if needed
-        localStorage.removeItem('auth-storage');
+        localStorage.removeItem("auth-storage");
+        // Mark as logged out to prevent auto-login attempts
+        localStorage.setItem("loggedOut", "true");
       }
     }
 
@@ -96,12 +104,12 @@ export const refreshAccessToken = async () => {
  */
 export const isTokenExpired = (token) => {
   if (!token) return true;
-  
+
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const payload = JSON.parse(atob(token.split(".")[1]));
     return payload.exp * 1000 < Date.now();
   } catch (error) {
-    console.error('Error checking token expiration:', error);
+    console.error("Error checking token expiration:", error);
     return true;
   }
 };
@@ -113,13 +121,24 @@ export const isTokenExpired = (token) => {
  * @returns {Promise} - The API call result
  */
 export const withTokenRefresh = async (apiCall, maxRetries = 1) => {
+  // Check if user has explicitly logged out, if using browser
+  if (
+    typeof window !== "undefined" &&
+    localStorage.getItem("loggedOut") === "true"
+  ) {
+    console.log(
+      "Not making authenticated call - user has explicitly logged out"
+    );
+    throw new Error("Authentication failed - user is logged out");
+  }
+
   let retries = 0;
-  
+
   while (retries <= maxRetries) {
     try {
       return await apiCall();
     } catch (error) {
-      if (error.message === 'Authentication failed' && retries < maxRetries) {
+      if (error.message === "Authentication failed" && retries < maxRetries) {
         const refreshed = await refreshAccessToken();
         if (refreshed) {
           retries++;
