@@ -161,7 +161,7 @@ const useWalletStore = create((set, get) => ({
   // Helper to check if any operation was successful
   hasSuccess: () =>
     Object.values(get().successStates).some((value) => value === true),
-    
+
   // Reset all success states
   resetAllSuccessStates: () => {
     set((state) => ({
@@ -169,19 +169,19 @@ const useWalletStore = create((set, get) => ({
         acc[key] = false;
         return acc;
       }, {}),
-      success: false
+      success: false,
     }));
   },
-  
+
   // Reset a specific success state
   resetSuccessState: (operation) => {
     if (operation) {
       set((state) => ({
         successStates: {
           ...state.successStates,
-          [operation]: false
+          [operation]: false,
         },
-        success: false
+        success: false,
       }));
     }
   },
@@ -222,7 +222,7 @@ const useWalletStore = create((set, get) => ({
           }
         );
         data = responseData;
-      }      // Update wallet after successful transfer
+      } // Update wallet after successful transfer
       await get().updateWalletAfterTransaction();
 
       set((state) => ({
@@ -233,12 +233,12 @@ const useWalletStore = create((set, get) => ({
           transfer: true,
         },
       }));
-      
+
       // Auto-clear success state after 3 seconds
       setTimeout(() => {
-        get().resetSuccessState('transfer');
+        get().resetSuccessState("transfer");
       }, 3000);
-      
+
       toast.success("Money sent successfully via Stripe");
       return data;
     } catch (error) {
@@ -319,7 +319,7 @@ const useWalletStore = create((set, get) => ({
             regularError.message
           );
         }
-      }      // Update wallet after successful deposit
+      } // Update wallet after successful deposit
       await get().updateWalletAfterTransaction();
 
       set((state) => ({
@@ -330,12 +330,12 @@ const useWalletStore = create((set, get) => ({
           deposit: true,
         },
       }));
-      
+
       // Auto-clear success state after 3 seconds
       setTimeout(() => {
-        get().resetSuccessState('deposit');
+        get().resetSuccessState("deposit");
       }, 3000);
-      
+
       toast.success("Funds deposited successfully");
       return data;
     } catch (error) {
@@ -389,12 +389,12 @@ const useWalletStore = create((set, get) => ({
           request: true,
         },
       }));
-      
+
       // Auto-clear success state after 3 seconds
       setTimeout(() => {
-        get().resetSuccessState('request');
+        get().resetSuccessState("request");
       }, 3000);
-      
+
       toast.success("Money request sent successfully");
       return data;
     } catch (error) {
@@ -422,7 +422,7 @@ const useWalletStore = create((set, get) => ({
       const { data } = await fetchWithAuth(url, {
         method: "POST",
         body: JSON.stringify({ requestId }),
-      });      // Update wallet after successful payment
+      }); // Update wallet after successful payment
       await get().updateWalletAfterTransaction();
       await get().fetchMoneyRequests();
 
@@ -434,12 +434,12 @@ const useWalletStore = create((set, get) => ({
           payRequest: true,
         },
       }));
-      
+
       // Auto-clear success state after 3 seconds
       setTimeout(() => {
-        get().resetSuccessState('payRequest');
+        get().resetSuccessState("payRequest");
       }, 3000);
-      
+
       toast.success("Request paid successfully");
       return data;
     } catch (error) {
@@ -720,13 +720,16 @@ const useWalletStore = create((set, get) => ({
 
       if (!data) {
         throw new Error("Failed to exchange currencies");
-      }      // Update wallet balance
+      } // Update wallet balance
       await get().updateWalletAfterTransaction();
-      set({ successStates: { ...get().successStates, exchange: true }, success: true });
-      
+      set({
+        successStates: { ...get().successStates, exchange: true },
+        success: true,
+      });
+
       // Auto-clear success state after 3 seconds
       setTimeout(() => {
-        get().resetSuccessState('exchange');
+        get().resetSuccessState("exchange");
       }, 3000);
 
       return data;
