@@ -29,6 +29,8 @@ export default function RequestPage() {
     getCurrencySymbol,
     setSuccess: setStoreSuccess,
     clearError: clearStoreError,
+    findUserByEmail,
+    searchUsers,
   } = useWalletStore();
   const [localLoading, setLocalLoading] = useState(false);
   const [localError, setLocalError] = useState(null);
@@ -45,13 +47,13 @@ export default function RequestPage() {
   const [activeTab, setActiveTab] = useState("new-request");
   const [receivedRequests, setReceivedRequests] = useState([]);
   const [sentRequests, setSentRequests] = useState([]);
-
   // Ensure user is authenticated first
   useEffect(() => {
     if (!isAuthenticated || !user) {
       fetchUser();
     }
   }, [isAuthenticated, user, fetchUser]);
+  
   // Fetch requests when user is authenticated
   useEffect(() => {
     const loadData = async () => {
@@ -62,6 +64,13 @@ export default function RequestPage() {
     };
     loadData();
   }, [isAuthenticated, user, fetchMoneyRequests]);
+  
+  // Reset success states when component mounts to prevent persistent success messages across pages
+  useEffect(() => {
+    // Reset all success states when the page loads
+    setStoreSuccess(false);
+    setLocalSuccess(false);
+  }, [setStoreSuccess]);
 
   // Update requests list when requests state changes
   useEffect(() => {
@@ -98,11 +107,12 @@ export default function RequestPage() {
   const handleSelectChange = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     clearLocalError();
     setLocalSuccess(false);
+    
+    // Reset any existing success states
     setStoreSuccess("request", false);
 
     try {
@@ -113,7 +123,9 @@ export default function RequestPage() {
 
       if (!formData.amount || parseFloat(formData.amount) <= 0) {
         throw new Error("Please enter a valid amount");
-      } // Make request using the store method
+      } 
+      
+      // Make request using the store method
       await requestMoney({
         targetEmail: formData.targetEmail,
         amount: parseFloat(formData.amount),
@@ -122,7 +134,7 @@ export default function RequestPage() {
       });
 
       setLocalSuccess(true);
-      // Note: The setSuccess('request', true) is already being set in the requestMoney function
+      // Note: The success state is now automatically managed in the requestMoney function
 
       // Reset form
       setFormData({
@@ -186,6 +198,8 @@ export default function RequestPage() {
               error={error}
               success={success}
               getCurrencySymbol={getCurrencySymbol}
+              searchUsers={searchUsers}
+              findUserByEmail={findUserByEmail}
             />
           )}
         </TabsContent>

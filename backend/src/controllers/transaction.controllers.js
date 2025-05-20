@@ -380,6 +380,11 @@ export const requestMoney = async (req, res) => {
       targetUser = await User.findById(targetUserId);
     } else if (targetEmail) {
       targetUser = await User.findOne({ email: targetEmail });
+      if (!targetUser) {
+        return res
+          .status(404)
+          .json({ message: "Recipient not found with this email" });
+      }
     } else {
       return res
         .status(400)

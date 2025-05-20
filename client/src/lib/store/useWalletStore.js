@@ -98,7 +98,7 @@ const useWalletStore = create((set, get) => ({
       set({
         wallet: data.wallet,
         isLoading: false,
-        isWalletLoaded: true
+        isWalletLoaded: true,
       });
 
       return data;
@@ -106,7 +106,7 @@ const useWalletStore = create((set, get) => ({
       set({
         isLoading: false,
         error: error.message,
-        isWalletLoaded: false
+        isWalletLoaded: false,
       });
       throw error;
     }
@@ -150,21 +150,41 @@ const useWalletStore = create((set, get) => ({
     } else {
       // For backward compatibility, set all success states to the same value
       set((state) => ({
-        successStates: Object.keys(state.successStates).reduce(
-          (acc, key) => {
-            acc[key] = value;
-            return acc;
-          },
-          {}
-        ),
+        successStates: Object.keys(state.successStates).reduce((acc, key) => {
+          acc[key] = value;
+          return acc;
+        }, {}),
         success: value,
       }));
     }
   },
-
   // Helper to check if any operation was successful
   hasSuccess: () =>
     Object.values(get().successStates).some((value) => value === true),
+    
+  // Reset all success states
+  resetAllSuccessStates: () => {
+    set((state) => ({
+      successStates: Object.keys(state.successStates).reduce((acc, key) => {
+        acc[key] = false;
+        return acc;
+      }, {}),
+      success: false
+    }));
+  },
+  
+  // Reset a specific success state
+  resetSuccessState: (operation) => {
+    if (operation) {
+      set((state) => ({
+        successStates: {
+          ...state.successStates,
+          [operation]: false
+        },
+        success: false
+      }));
+    }
+  },
 
   // Add a new function to update wallet after transactions
   updateWalletAfterTransaction: async () => {
@@ -175,7 +195,7 @@ const useWalletStore = create((set, get) => ({
 
       set({
         wallet: data.wallet,
-        isWalletLoaded: true
+        isWalletLoaded: true,
       });
 
       return data;
@@ -202,9 +222,7 @@ const useWalletStore = create((set, get) => ({
           }
         );
         data = responseData;
-      }
-
-      // Update wallet after successful transfer
+      }      // Update wallet after successful transfer
       await get().updateWalletAfterTransaction();
 
       set((state) => ({
@@ -215,6 +233,12 @@ const useWalletStore = create((set, get) => ({
           transfer: true,
         },
       }));
+      
+      // Auto-clear success state after 3 seconds
+      setTimeout(() => {
+        get().resetSuccessState('transfer');
+      }, 3000);
+      
       toast.success("Money sent successfully via Stripe");
       return data;
     } catch (error) {
@@ -295,9 +319,7 @@ const useWalletStore = create((set, get) => ({
             regularError.message
           );
         }
-      }
-
-      // Update wallet after successful deposit
+      }      // Update wallet after successful deposit
       await get().updateWalletAfterTransaction();
 
       set((state) => ({
@@ -308,6 +330,12 @@ const useWalletStore = create((set, get) => ({
           deposit: true,
         },
       }));
+      
+      // Auto-clear success state after 3 seconds
+      setTimeout(() => {
+        get().resetSuccessState('deposit');
+      }, 3000);
+      
       toast.success("Funds deposited successfully");
       return data;
     } catch (error) {
@@ -324,7 +352,6 @@ const useWalletStore = create((set, get) => ({
       throw error;
     }
   },
-
   requestMoney: async (requestData) => {
     set({ isLoading: true, error: null });
     try {
@@ -362,6 +389,12 @@ const useWalletStore = create((set, get) => ({
           request: true,
         },
       }));
+      
+      // Auto-clear success state after 3 seconds
+      setTimeout(() => {
+        get().resetSuccessState('request');
+      }, 3000);
+      
       toast.success("Money request sent successfully");
       return data;
     } catch (error) {
@@ -389,9 +422,7 @@ const useWalletStore = create((set, get) => ({
       const { data } = await fetchWithAuth(url, {
         method: "POST",
         body: JSON.stringify({ requestId }),
-      });
-
-      // Update wallet after successful payment
+      });      // Update wallet after successful payment
       await get().updateWalletAfterTransaction();
       await get().fetchMoneyRequests();
 
@@ -403,6 +434,12 @@ const useWalletStore = create((set, get) => ({
           payRequest: true,
         },
       }));
+      
+      // Auto-clear success state after 3 seconds
+      setTimeout(() => {
+        get().resetSuccessState('payRequest');
+      }, 3000);
+      
       toast.success("Request paid successfully");
       return data;
     } catch (error) {
@@ -554,7 +591,6 @@ const useWalletStore = create((set, get) => ({
       return null;
     }
   },
-
   searchUsers: async (searchTerm) => {
     try {
       const { data } = await fetchWithAuth(
@@ -574,6 +610,24 @@ const useWalletStore = create((set, get) => ({
       return [];
     }
   },
+  findUserByEmail: async (email) => {
+    try {
+      const { data } = await fetchWithAuth(
+        `${API_URL}/transactions/users/transfer?search=${encodeURIComponent(
+          email
+        )}`
+      );
+
+      // Find the exact match by email
+      const exactMatch = data.users.find(
+        (user) => user.email.toLowerCase() === email.toLowerCase()
+      );
+      return exactMatch || null;
+    } catch (error) {
+      console.error("Error finding user by email:", error);
+      return null;
+    }
+  },
 
   clearError: () => set({ error: null }),
 
@@ -583,9 +637,7 @@ const useWalletStore = create((set, get) => ({
 
   getBalanceDisplay: (currency) => {
     const state = get();
-    const balance = state.wallet.balances?.find(
-      (b) => b.currency === currency
-    );
+    const balance = state.wallet.balances?.find((b) => b.currency === currency);
     const currencyObj = CURRENCIES.find((c) => c.value === currency);
     if (balance && currencyObj) {
       return `${currencyObj.symbol}${balance.amount.toFixed(2)}`;
@@ -595,8 +647,7 @@ const useWalletStore = create((set, get) => ({
 
   getTotalBalanceInUSD: () => {
     const state = get();
-    if (!state.wallet.balances || state.wallet.balances.length === 0)
-      return 0;
+    if (!state.wallet.balances || state.wallet.balances.length === 0) return 0;
 
     return state.wallet.balances.reduce((total, balance) => {
       const amountInUSD =
@@ -644,9 +695,9 @@ const useWalletStore = create((set, get) => ({
   },
 
   resetWalletState: () => {
-    set({ 
+    set({
       isWalletLoaded: false,
-      wallet: { balances: [], walletId: "" }
+      wallet: { balances: [], walletId: "" },
     });
   },
 
@@ -654,7 +705,7 @@ const useWalletStore = create((set, get) => ({
   exchangeCurrency: async (fromCurrency, toCurrency, amount) => {
     try {
       set({ isLoading: true, error: null });
-      
+
       const { data } = await fetchWithAuth(
         `${API_BASE_URL}/api/transactions/exchange`,
         {
@@ -669,11 +720,14 @@ const useWalletStore = create((set, get) => ({
 
       if (!data) {
         throw new Error("Failed to exchange currencies");
-      }
-
-      // Update wallet balance
+      }      // Update wallet balance
       await get().updateWalletAfterTransaction();
-      set({ successStates: { ...get().successStates, exchange: true } });
+      set({ successStates: { ...get().successStates, exchange: true }, success: true });
+      
+      // Auto-clear success state after 3 seconds
+      setTimeout(() => {
+        get().resetSuccessState('exchange');
+      }, 3000);
 
       return data;
     } catch (error) {
@@ -688,7 +742,7 @@ const useWalletStore = create((set, get) => ({
   fetchExchangeHistory: async () => {
     try {
       set({ isLoading: true, error: null });
-      
+
       const { data } = await fetchWithAuth(
         `${API_BASE_URL}/api/transactions/exchange-history`
       );

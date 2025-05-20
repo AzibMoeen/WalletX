@@ -222,7 +222,8 @@ const PassportVerificationForm = ({
             <div className="space-y-2">
               <Label htmlFor="fullName" className="text-sm font-medium">
                 Full Name (as on passport)
-              </Label>              <Input
+              </Label>{" "}
+              <Input
                 id="fullName"
                 className={`h-10 ${errors.fullName ? "border-red-500" : ""}`}
                 {...register("fullName", {
